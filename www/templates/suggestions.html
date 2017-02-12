@@ -1,0 +1,235 @@
+<ion-view view-title="Onde tá fervendo?" class="suggestions" hide-back-button="false">
+
+  <ion-nav-bar class="bar-royal">
+    <ion-nav-back-button></ion-nav-back-button>
+  </ion-nav-bar>
+
+  <ion-content scroll="true">
+    <div class="place-info">
+
+      <div class="row">
+        <div class="col col-10">
+          <img src="img/thermometer.png"/>
+        </div>
+        <div class="col">
+          <large>Nome do Local</large>
+          <small>Rua Nome da Rua, 1234, Bairro</small>
+          <small>200m</small>
+          <small><b>Tá morno</b></small>
+        </div>
+        <div class="col col-20" style="padding: 0;">
+          <img src="https://fuiviajarn.files.wordpress.com/2014/06/balada7.jpg?w=1200" class="photo"/>
+        </div>
+      </div>
+
+
+      <div class="row tags">
+        <div class="col text-center">
+          <img src="img/drink.png"/><br>
+          Pub Bar
+        </div>
+        <div class="col text-center">
+          <img src="img/shirt.png"/><br>
+          Casual
+        </div>
+        <div class="col text-center">
+          <img src="img/money.png"/><br>
+          $$$
+        </div>
+        <div class="col col-20 text-center" style="background: #441579; color: #fff; font-size: 10px;">
+          <img src="img/therm-question.png"/>
+          Colaborar
+        </div>
+      </div>
+    </div>
+    <div class="place-info">
+
+      <div class="row">
+        <div class="col col-10">
+          <img src="img/thermometer.png"/>
+        </div>
+        <div class="col">
+          <large>Nome do Local</large>
+          <small>Rua Nome da Rua, 1234, Bairro</small>
+          <small>200m</small>
+          <small><b>Tá morno</b></small>
+        </div>
+        <div class="col col-20" style="padding: 0;">
+          <img src="https://fuiviajarn.files.wordpress.com/2014/06/balada7.jpg?w=1200" class="photo"/>
+        </div>
+      </div>
+
+
+      <div class="row tags">
+        <div class="col text-center">
+          <img src="img/drink.png"/><br>
+          Pub Bar
+        </div>
+        <div class="col text-center">
+          <img src="img/shirt.png"/><br>
+          Casual
+        </div>
+        <div class="col text-center">
+          <img src="img/money.png"/><br>
+          $$$
+        </div>
+        <div class="col col-20 text-center" style="background: #441579; color: #fff; font-size: 10px;">
+          <img src="img/therm-question.png"/>
+          Colaborar
+        </div>
+      </div>
+    </div>
+    <div class="place-info">
+
+      <div class="row">
+        <div class="col col-10">
+          <img src="img/thermometer.png"/>
+        </div>
+        <div class="col">
+          <large>Nome do Local</large>
+          <small>Rua Nome da Rua, 1234, Bairro</small>
+          <small>200m</small>
+          <small><b>Tá morno</b></small>
+        </div>
+        <div class="col col-20" style="padding: 0;">
+          <img src="https://fuiviajarn.files.wordpress.com/2014/06/balada7.jpg?w=1200" class="photo"/>
+        </div>
+      </div>
+
+
+      <div class="row tags">
+        <div class="col text-center">
+          <img src="img/drink.png"/><br>
+          Pub Bar
+        </div>
+        <div class="col text-center">
+          <img src="img/shirt.png"/><br>
+          Casual
+        </div>
+        <div class="col text-center">
+          <img src="img/money.png"/><br>
+          $$$
+        </div>
+        <div class="col col-20 text-center" style="background: #441579; color: #fff; font-size: 10px;">
+          <img src="img/therm-question.png"/>
+          Colaborar
+        </div>
+      </div>
+    </div>
+    <div class="place-info">
+
+      <div class="row">
+        <div class="col col-10">
+          <img src="img/thermometer.png"/>
+        </div>
+        <div class="col">
+          <large>Nome do Local</large>
+          <small>Rua Nome da Rua, 1234, Bairro</small>
+          <small>200m</small>
+          <small><b>Tá morno</b></small>
+        </div>
+        <div class="col col-20" style="padding: 0;">
+          <img src="https://fuiviajarn.files.wordpress.com/2014/06/balada7.jpg?w=1200" class="photo"/>
+        </div>
+      </div>
+
+
+      <div class="row tags">
+        <div class="col text-center">
+          <img src="img/drink.png"/><br>
+          Pub Bar
+        </div>
+        <div class="col text-center">
+          <img src="img/shirt.png"/><br>
+          Casual
+        </div>
+        <div class="col text-center">
+          <img src="img/money.png"/><br>
+          $$$
+        </div>
+        <div class="col col-20 text-center" style="background: #441579; color: #fff; font-size: 10px;">
+          <img src="img/therm-question.png"/>
+          Colaborar
+        </div>
+      </div>
+    </div>
+
+  </ion-content>
+
+  <div class="row options">
+    <div class="col text-center" ng-click="toggle('distance')">
+      até <br>
+      10km
+    </div>
+    <div class="col text-center" ng-click="toggle('price')">
+      de R$00 à R$1000
+    </div>
+    <div class="col text-center" ng-click="toggle('categories')">
+      Todas categorias
+    </div>
+    <div class="col col-20 text-center" style="">
+      Mais opções
+    </div>
+  </div>
+
+  <div class="distance option" id="distance" style="bottom: -182px;">
+    Distância até: <b>{{ options.distance}}km</b><br>
+    <div class="item range">
+      1km
+      <input type="range" name="volume" min="1" max="100" value="10" ng-model="options.distance">
+      100km
+    </div>
+  </div>
+
+  <div class="price option" id="price" style="bottom: -182px;" >
+    Preço de: <b>R${{ options.minPrice}}</b><br>
+    <div class="item range">
+      R$0
+      <input type="range" name="volume" min="0" max="1000" value="0" ng-model="options.minPrice" step="20">
+      R$1000
+    </div>
+
+    até: <b>R${{ options.maxPrice}}</b><br>
+    <div class="item range">
+      R$0
+      <input type="range" name="volume" min="0" max="1000" value="200" ng-model="options.maxPrice" step="20">
+      R$1000
+    </div>
+  </div>
+
+  <div class="categories option" id="categories" style="bottom: -182px;">
+    <ul class="list">
+      <li class="item item-toggle">
+        Balada
+        <label class="toggle toggle">
+          <input type="checkbox" checked>
+          <div class="track">
+            <div class="handle"></div>
+          </div>
+        </label>
+      </li>
+
+      <li class="item item-toggle">
+        Bar
+        <label class="toggle toggle">
+          <input type="checkbox" checked>
+          <div class="track">
+            <div class="handle"></div>
+          </div>
+        </label>
+      </li>
+
+      <li class="item item-toggle">
+        Restaurante
+        <label class="toggle toggle">
+          <input type="checkbox" checked>
+          <div class="track">
+            <div class="handle"></div>
+          </div>
+        </label>
+      </li>
+
+
+    </ul>
+  </div>
+</ion-view>

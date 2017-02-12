@@ -1,0 +1,12 @@
+{
+  "name": "tafervendo",
+  "app_id": "cca99158",
+  "gulpStartupTasks": [
+    "sass",
+    "watch"
+  ],
+  "watchPatterns": [
+    "www/**/*",
+    "!www/lib/**/*"
+  ]
+}

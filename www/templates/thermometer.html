@@ -1,0 +1,17 @@
+<ion-modal-view>
+  <ion-content class="padding text-center therm">
+    <p>Ajude-nos a manter nossas informações atualizadas! Como está o movimento nesse local ?</p>
+    <div class="therm-wrapper">
+      <h4 id="caption1">Tá fervendo! :D - </h4>
+      <h4 id="caption2">Tá morno! :) - </h4>
+      <h4 id="caption3">Tá fraco! :( - </h4>
+      <img src="http://www.clipartkid.com/images/49/weather-thermometer-clip-art-clipart-panda-free-clipart-images-cXmMl1-clipart.png" id="therm-image"/>
+      <div class="item range" id="therm-spinner">
+        <input type="range" name="status" min="1" max="10" value="4" ng-model="currentReport.status">
+      </div>
+    </div>
+
+    <button class="button button-block button-royal" ng-click="closeThermometer()">Concluído!</button>
+    <h6 class="text-center">Agradecemos sua colaboração</h6>
+  </ion-content>
+</ion-modal-view>
