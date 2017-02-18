@@ -1,6 +1,6 @@
-<ion-view ng-controller="MapCtrl" hide-nav-bar="true">
+<ion-view hide-nav-bar="true" cache-view="false">
   <div class="bar bar-header item-input-inset">
-    <button class="button button-icon ion-navicon">
+    <button class="button button-icon ion-navicon" ng-click="toggleLeftSideMenu()">
     </button>
     <label class="item-input-wrapper">
       <i class="icon ion-ios-search placeholder-icon"></i>
@@ -45,7 +45,7 @@
       </div>
       <div class="col text-center">
         <img src="img/money.png"/><br>
-        $$$
+        {{currentPlace.price}}
       </div>
       <div class="col col-20 text-center" style="background: #441579; color: #fff; font-size: 10px;" ng-click="openThermometer()">
         <img src="img/therm-question.png"/>
@@ -54,7 +54,8 @@
     </div>
 
     <div class="row descr">
-      <p>Charmoso bar e balada, estilo clube privê, com som predominante eletrônico, house e variações da dance music.</p>
+      <ion-spinner icon="dots" ng-hide="hideSpinner" class="align-center"></ion-spinner>
+      <p>{{currentPlace.description}}</p>
     </div>
 
     <div class="row">
@@ -63,7 +64,9 @@
       </button>
     </div>
 
-    <div class="row">
+    <div class="row" ng-hide="noPhotos">
+      <ion-spinner icon="dots" ng-hide="hideSpinner" class="align-center text-center"></ion-spinner>
+      <span ng-show="noPhotos" class="text-center align-center">Sem fotos do local</span>
       <ion-scroll direction="x" class="wide-as-needed photos">
         <img ng-src="{{photo.getUrl({'maxWidth': 200, 'maxHeight': 200})}}" ng-repeat="photo in currentPlace.allPhotos track by $index"/>
       </ion-scroll>
@@ -71,11 +74,12 @@
 
     <div class="row">
       <div class="col col-30">
-        <a class="icon ion-social-facebook"></a>
-        <a class="icon ion-social-instagram"></a>
+        <a class="icon ion-social-facebook" href="{{currentPlace.facebook}}"></a>
+        <!--<a class="icon ion-social-instagram"></a>-->
       </div>
       <div class="col">
-        <a class="button-icon icon-left ion-ios-world-outline access-site" href="{{currentPlace.website}}">Acessar site</a>
+        <a class="button-icon icon-left ion-ios-world-outline access-site"
+           href="{{currentPlace.website != null ? currentPlace.website : ''}}">Acessar site</a>
       </div>
     </div>
   </div>

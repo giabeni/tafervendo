@@ -18,10 +18,18 @@
     </ion-header-bar>
     <ion-content>
       <ion-list>
-        <ion-item menu-close ng-click="">
-          Login
+        <ion-item menu-close ng-click="fbLogin()">
+          Login com Facebook
         </ion-item>
       </ion-list>
+      <div class="list card">
+        <div class="item">
+          <h2>{{fbUser.name}}</h2>
+        </div>
+        <div class="item item-body">
+          <img src="http://graph.facebook.com/{{fbUser.id}}/picture?width=270&height=270"/>
+        </div>
+      </div>
     </ion-content>
   </ion-side-menu>
 </ion-side-menus>

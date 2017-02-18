@@ -1,6 +1,6 @@
-var app = angular.module('tafervendo', ['ionic', 'ngCordova', 'ngSanitize', 'backand', 'ngCookies']);
+var app = angular.module('tafervendo', ['ionic', 'ngCordova', 'ngSanitize', 'backand', 'ngCookies', 'ngOpenFB']);
 
-app.run(function($ionicPlatform) {
+app.run(function($ionicPlatform, ngFB) {
   $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
     // for form inputs)
@@ -13,6 +13,9 @@ app.run(function($ionicPlatform) {
       // org.apache.cordova.statusbar required
       StatusBar.styleDefault();
     }
+
+    //initialize facebook
+    ngFB.init({appId: '1442526929123214'});
   });
 });
 

@@ -1,77 +1,7 @@
-app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $ionicModal, $timeout, ngFB) {
-  $rootScope.toggleLeftSideMenu = function() {
-    $ionicSideMenuDelegate.toggleLeft();
-  };
-
-  $rootScope.fbLogin = function () {
-    ngFB.login({scope: 'email,public_profile'}).then(
-      function (response) {
-        if (response.status === 'connected') {
-          console.log('Facebook login succeeded');
-          window.localStorage.setItem("fbLogged", true);
-          getMyFacebookInfo();
-        } else {
-          alert('Facebook login failed');
-          window.localStorage.setItem("fbLogged", false);
-        }
-      });
-  };
-
-  ngFB.getLoginStatus().then(function(result){
-    console.log("login status");
-    console.log(result);
-    if(result.status === 'connected'){
-      $rootScope.fbAccessToken = result.authResponse.accessToken;
-      getMyFacebookInfo();
-      getFacebookPlace();
-
-    }
-  });
-
-
-  function getMyFacebookInfo(){
-    console.log("getting pages");
-    ngFB.api({
-      path: '/me',
-      params: {fields: 'id,name'}
-    }).then(
-      function (user) {
-        $timeout(function() {
-          $scope.fbUser = user;
-          console.log(user);
-        })
-      },
-      function (error) {
-        window.localStorage.setItem("fbLogged", false);
-        alert('Facebook error: ' + error.error_description);
-      });
-  }
-
-  function getFacebookPlace(){
-    ngFB.api({
-      path: '/search',
-      params: {
-        q: "Paulinho's Bar",
-        type: "page",
-        access_token: $rootScope.fbAccessToken,
-        fields: 'description,about,cover,link,place_type,price_range,location'
-      }
-    }).then(
-      function (pages) {
-        $timeout(function() {
-          console.log(pages);
-        })
-      },
-      function (error) {
-        alert('Facebook error: ' + error.error_description);
-      });
-  }
-
-
+app.controller('AppCtrl', function($scope) {
 });
 
-app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout, $sce, DB, $ionicLoading, $ionicModal, $ionicPopup, ngFB, $rootScope) {
-
+app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout, $sce, DB, $ionicLoading, $ionicModal) {
 
   //global variables
   $scope.places = [];
@@ -91,16 +21,13 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   }).then(function(modal) {
     $scope.thermometerModal = modal;
   });
-
   //get current location
   var geoOptions = {timeout: 30000, enableHighAccuracy: false};
   var watch = $cordovaGeolocation.watchPosition(geoOptions);
   watch.then(null,
-    function(error){ alert("Could not get location");  },
+    function(error){ console.log("Could not get location");  },
     function(position) {
-      console.log("position changed or time passed");
       $scope.myPosition = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-      console.log($scope.myPosition.lat() + ' ' + $scope.myPosition.lng());
       if ($scope.firstLoad) {
         initializeMap(position);
         $ionicLoading.show({
@@ -113,13 +40,14 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
         });
         addMyPositionMarker(position);
         $scope.lastPosition = position;
-
       } else {
         updateMyPosition($scope.myPositionMarker, $scope.myPosition);
       }
 
-      if ($scope.firstLoad || getDistanceFromLatLonInKm(position, $scope.lastPosition, true) > 0.2) {
+      if ($scope.firstLoad || getDistanceFromLatLonInKm(position, $scope.lastPosition) > 1) {
+        //TODO separate searchNearByPlaces and getStatusOfPlaces
         searchNearByPlaces();
+        $scope.firstLoad = false;
       }
       if(!$scope.firstLoad) updateStatusMarkers();
       $scope.lastPosition = position;
@@ -129,22 +57,12 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
   /* Map functions */
 
-  function getDistanceFromLatLonInKm(pos1,pos2, geo) {
-    if(geo){
-      var lat1 = pos1.coords.latitude ;
-      var lon1 = pos1.coords.longitude ;
+  function getDistanceFromLatLonInKm(pos1,pos2) {
+    var lat1 = pos1.coords.latitude;
+    var lon1 = pos1.coords.longitude;
 
-      var lat2 = pos2.coords.latitude;
-      var lon2 = pos2.coords.longitude;
-
-    }else{
-      var lat1 =  pos1.lat();
-      var lon1 =  pos1.lng();
-
-      var lat2 = pos2.lat();
-      var lon2 = pos2.lng();
-
-    }
+    var lat2 = pos2.coords.latitude;
+    var lon2 = pos2.coords.longitude;
 
     var R = 6371; // Radius of the earth in km
     var dLat = deg2rad(lat2-lat1);  // deg2rad below
@@ -294,7 +212,6 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
   function updateMyPosition(marker, position) {
     marker.setPosition(position);
-    $scope.map.panTo(position);
   }
 
   function searchNearByPlaces(){
@@ -315,8 +232,6 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
   function addPlacesOnMap(results, status){
     if (status == google.maps.places.PlacesServiceStatus.OK) {
-      //clear the places array and update it
-      $scope.places = [];
       $scope.places = results;
 
       for (var i = 0; i < results.length; i++) {
@@ -327,11 +242,6 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
         console.log(place);
 
 
-        //if user is close to place, suggest colaboration
-        if(getDistanceFromLatLonInKm($scope.myPosition, place.geometry.location, false) < 0.05 && !$scope.firstLoad){
-          showNearConfirm(place.name, i);
-        }
-
         //TODO dont increase id when INSERT IGNORE
         var newPlace = {};
         newPlace.place_id = place.place_id;
@@ -341,16 +251,12 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
         newPlace.long = place.geometry.location.lng();
         newPlace.type = place.types[0] + " " + place.types[1] + " " + place.types[2];
 
-
         DB.savePlaceIfNotExists(newPlace).then(function(result) {
           $ionicLoading.hide();
-          $scope.firstLoad = false;
         });
 
-
-
       }
-    }else alert("Erro ao encontrar locais:"+ status);
+    }
   }
 
   //get places Backand infos and add marker
@@ -384,16 +290,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
       });
 
-
     });
-  }
-
-  function toggleBounce(index) {
-    if ( $scope.places[index].marker.getAnimation() !== null) {
-      $scope.places[index].marker.setAnimation(null);
-    } else {
-      $scope.places[index].marker.setAnimation(google.maps.Animation.BOUNCE);
-    }
   }
 
   function getThermometerMark(status, lastreport){
@@ -432,9 +329,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     //calculate distance from my position
     calcDistance($scope.myPosition, $scope.currentPlace.geometry.location);
 
-    $timeout(function() {
-      $scope.$apply();
-    });
+    $scope.$apply();
 
   }
 
@@ -463,8 +358,6 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   }
 
   function getPlaceDetails(place_id){
-    $scope.hideSpinner = false;
-    $scope.noPhotos = false;
     var request = {
       placeId: place_id
     };
@@ -473,95 +366,13 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     service.getDetails(request,
       function callback(place, status) {
         if (status == google.maps.places.PlacesServiceStatus.OK) {
-          console.log("Google Details:");
+          console.log("Details:");
           console.log(place);
           $scope.currentPlace.allPhotos = place.photos;
-          if(typeof place.photos == "undefined") {
-            $scope.noPhotos = true;
-          }
           $scope.currentPlace.website = place.website;
-
-          DB.getPlaceByPlaceId(place.place_id).then(function(result){
-            var dbPlace = result.data[0];
-            console.log("DB details: ");
-            console.log(dbPlace);
-            if(dbPlace.facebook == null){
-              getFacebookPlace(place, function(fbPlace){
-
-                if(fbPlace == false){
-                  $scope.currentPlace.description = dbPlace.description == null ? "Sem descrição" : dbPlace.description ;
-                  $scope.currentPlace.price = dbPlace.price == null ? "?" : dbPlace.price;
-                  $scope.hideSpinner = true;
-                  return;
-                }
-                console.log("FB details: ");
-                console.log(fbPlace);
-                $scope.currentPlace.description = fbPlace.about != null ? fbPlace.about : fbPlace.description;
-                $scope.currentPlace.facebook = fbPlace.link;
-
-                $scope.currentPlace.price = fbPlace.price_range == null ? "?" : fbPlace.price_range;
-                if(place.website == null){
-                  if(fbPlace.website != null)
-                    $scope.currentPlace.website = fbPlace.website;
-                  else
-                    $scope.currentPlace.website = fbPlace.link;
-                }
-
-                $scope.hideSpinner = true;
-                $scope.$apply();
-
-                DB.updatePlace($scope.currentPlace.place_id, $scope.currentPlace).then(function(){
-                  console.log("Facebook details saved in database");
-                });
-              });
-            }else{
-              $scope.currentPlace.description = dbPlace.description == null ? "Sem descrição" : dbPlace.description ;
-              $scope.currentPlace.facebook = dbPlace.facebook;
-              $scope.currentPlace.price = dbPlace.price;
-              $scope.hideSpinner = true;
-            }
-          });
-
+          $scope.$apply();
         }else alert(status);
       });
-  }
-
-  function getFacebookPlace(place, callback){
-    //search for page of place in facebook
-    var rightPlace = {};
-    ngFB.api({
-      path: '/search',
-      params: {
-        q: place.name,
-        type: "page",
-        access_token: $rootScope.fbAccessToken,
-        fields: 'description,about,cover,link,place_type,price_range,location,name,website'
-      }
-    }).then(
-      function (pages) {
-        var found = false;
-        for(var i = 0; i < pages.data.length ; i++){
-          /* if the place has almost the same coordinates */
-          if(pages.data[i].place_type == "PLACE" &&
-            Math.floor(pages.data[i].location.latitude*1000)/1000 == Math.floor(place.geometry.location.lat()*1000)/1000 &&
-            Math.floor(pages.data[i].location.longitude*1000)/1000 == Math.floor(place.geometry.location.lng()*1000)/1000){
-
-              console.log('found ' +pages.data[i].name );
-              found = true;
-              rightPlace = pages.data[i];
-              console.log(rightPlace);
-              callback(rightPlace);
-
-          }
-        }
-
-        if(!found) callback(false);
-      },
-      function (error) {
-        console.log('Facebook error: ' + error.error_description);
-      });
-
-
   }
 
   function saveThermometerReport(){
@@ -615,18 +426,13 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   }
 
   function getDateInterval(lastreport){
-    if(lastreport == null) return null;
+    if(lastreport == null) return 0;
     var now = new Date();
     lastreport = lastreport.replace('T', ' ');
     var dateReport = mysqlTimeStampToDate(lastreport);
-    dateReport.setHours ( dateReport.getHours() - 2 );
     var diffMs = (now - dateReport); // milliseconds between now & dateReport
-    var diffDays = Math.floor(diffMs / 86400000); // days
-    var diffHrs = Math.round((diffMs % 86400000) / 3600000); // hours
-    var diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000); // minutes
-
+    var diffHrs = Math.floor((diffMs % 86400000) / 3600000); // hours
     return diffHrs;
-
 
   }
 
@@ -679,33 +485,9 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     place.marker.setIcon("img/thermometer/"+status+".png");
   }
 
-  function showNearConfirm(name, index) {
-    var confirmPopup = $ionicPopup.confirm({
-      title: 'Colabore conosco!',
-      template: "Você parece estar perto de <b>" +name+ "</b>. Ajude-nos dizendo como está o movimento aí!",
-      buttons: [
-        { text: 'Agora não' },
-        {
-          text: '<b>Ok!</b>',
-          type: 'button-royal'
-        }
-      ]
-    });
-
-    confirmPopup.then(function(res) {
-      if(res) {
-        setCurrentPlace(index);
-        $scope.openPlace();
-        $scope.openThermometer();
-      } else {
-
-      }
-    });
-  }
-
 
   /* animations and state */
-  $scope.openPlace = function(index){
+  $scope.openPlace = function(place){
     document.getElementById("place-info").style.bottom = "-285px";
   };
 
@@ -714,7 +496,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     document.getElementById("place-info").style.bottom = "0";
   };
 
-  $scope.closePlace = function(index){
+  $scope.closePlace = function(place){
     if(document.getElementById("place-info").style.bottom == "-285px")
       document.getElementById("place-info").style.bottom = "-480px";
     else
@@ -880,24 +662,7 @@ app.service('DB', function ($http, Backand) {
     });
   };
 
-  service.updatePlace = function(place_id, place){
-    return $http ({
-      method: 'GET',
-      url: Backand.getApiUrl() + '/1/query/data/updatePlace',
-      params: {
-        parameters: {
-          description: place.description,
-          price: place.price,
-          facebook: place.facebook,
-          place_id: place_id,
-          website: place.website
-        }
-      }
-    });
-  };
-
 
 
 
 });
-
