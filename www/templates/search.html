@@ -1,15 +1,19 @@
-<ion-view view-title="Onde tá fervendo?" class="suggestions" hide-back-button="false" id="sugView">
+<ion-view view-title="" class="suggestions" hide-back-button="false" hide-nav-bar="true" id="searchView">
 
-  <ion-nav-bar class="bar-royal">
-    <ion-nav-back-button></ion-nav-back-button>
-  </ion-nav-bar>
-  <ion-nav-buttons side="right">
-    <button class="button button-icon icon ion-ios-refresh-empty " ng-click="refresh()">
+
+  <div class="bar bar-header item-input-inset">
+    <button class="button button-icon ion-ios-arrow-back" ng-click="goBack()" style="color: #441579;">
     </button>
-  </ion-nav-buttons>
+      <label class="item-input-wrapper">
+        <form ng-submit="refresh()">
+          <input type="search" placeholder="Pesquisar local, evento, região..." ng-model="query">
+        </form>
+      </label>
+    <i class="icon ion-search" style="color: #441579;font-size:26px" ng-click="refresh()"></i>
+  </div>
 
-  <ion-content scroll="true">
-    <div class="place-info" ng-repeat="place in gPlaces track by $index" ng-click="goToPlace(place.place_id)">
+  <ion-content scroll="true" style="top:44px; bottom: 55px; position: absolute;">
+    <div class="place-info" ng-repeat="place in gPlaces track by $index" ng-click="goToPlace(place.place_id)" ng-hide="place.hide">
 
       <div class="row">
         <div class="col col-10">
@@ -17,7 +21,7 @@
         </div>
         <div class="col">
           <large>{{place.name}}</large>
-          <small>{{place.vicinity}}</small>
+          <small>{{place.formatted_address}}</small>
           <small>{{place.distanceText}}</small>
           <small><b>{{getLastReport(place.lastreport)}}</b></small>
         </div>

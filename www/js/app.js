@@ -62,12 +62,23 @@ app.config(function($stateProvider, $urlRouterProvider, BackandProvider,$httpPro
         }
       }
     })
+
     .state('app.place', {
       url: '/place/:placeId',
       views: {
         'menuContent': {
           templateUrl: 'templates/place.html',
           controller: 'PlaceCtrl'
+        }
+      }
+    })
+
+    .state('app.search', {
+      url: '/search/:query',
+      views: {
+        'menuContent': {
+          templateUrl: 'templates/search.html',
+          controller: 'SearchCtrl'
         }
       }
     });

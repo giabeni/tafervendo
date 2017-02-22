@@ -1,3 +1,83 @@
 <ion-view view-title="Place">
+  <ion-nav-title>{{currentPlace.name}}</ion-nav-title>
+  <ion-nav-bar class="bar-royal">
+    <ion-nav-back-button></ion-nav-back-button>
+  </ion-nav-bar>
+  <ion-nav-buttons side="right">
+    <button class="button button-icon icon ion-ios-analytics" ng-click="">
+    </button>
+  </ion-nav-buttons>
 
+
+  <ion-content>
+    <div class="place-info" id="placeView">
+      <div class="row"id="row-info">
+        <div class="col col-10">
+          <img src="{{getThermIcon(currentPlace.status, currentPlace.lastreport)}}"/>
+        </div>
+        <div class="col">
+          <large>{{currentPlace.name}}</large>
+          <small>{{currentPlace.vicinity}}</small>
+          <small>{{currentPlace.distance}}</small>
+          <small>{{getLastReport(currentPlace.lastreport)}}</small>
+        </div>
+        <div class="col col-20" style="padding: 0;">
+          <img src="{{currentPlace.photo}}" class="photo" ng-click="openImagesModal(0)"/>
+        </div>
+      </div>
+
+
+      <div class="row tags" id="row-tags">
+        <div class="col text-center">
+          <img src="img/{{currentPlace.category}}.png"/><br>
+          {{currentPlace.category}}
+        </div>
+        <div class="col text-center">
+          <h2>{{currentPlace.rating || "?"}}</h2><br>
+          Estrelas
+        </div>
+        <div class="col text-center">
+          <img src="img/money.png"/><br>
+          {{currentPlace.price || "?"}}
+        </div>
+        <div class="col col-20 text-center" style="background: #441579; color: #fff; font-size: 10px;" ng-click="openThermometer()">
+          <img src="img/therm-question.png"/>
+          Colaborar
+        </div>
+      </div>
+
+      <div class="row descr" id="row-descr">
+        <ion-spinner icon="dots" ng-hide="hideSpinner" class="align-center"></ion-spinner>
+        <p>{{currentPlace.description}}</p>
+      </div>
+
+      <div class="row" id="row-events">
+        <button class="button button-block button-royal fixed-bottom icon-left ion-calendar no-float" ng-click="showEvents()">
+          Próximos Eventos
+        </button>
+      </div>
+
+      <div class="row" ng-hide="noPhotos" id="row-photos">
+        <ion-spinner icon="dots" ng-hide="hideSpinner" class="align-center text-center"></ion-spinner>
+        <span ng-show="noPhotos" class="text-center align-center">Sem fotos do local</span>
+        <ion-scroll direction="x" class="wide-as-needed photos">
+          <img ng-src="{{photo.getUrl({'maxWidth': 200, 'maxHeight': 200})}}" ng-repeat="photo in currentPlace.allPhotos track by $index"
+          ng-click="openImagesModal($index)"/>
+        </ion-scroll>
+      </div>
+
+      <div class="row" id="row-links">
+        <div class="col col-30">
+          <a class="icon ion-social-facebook" href="{{currentPlace.facebook}}"></a>
+          <!--<a class="icon ion-social-instagram"></a>-->
+        </div>
+        <div class="col">
+          <a class="button-icon icon-left ion-ios-world-outline access-site"
+             href="{{currentPlace.website != null ? currentPlace.website : ''}}">Acessar site</a>
+        </div>
+      </div>
+
+    </div>
+
+  </ion-content>
 </ion-view>
