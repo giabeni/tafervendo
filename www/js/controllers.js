@@ -16,15 +16,19 @@ app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $
       });
   };
 
-  ngFB.getLoginStatus().then(function(result){
-    console.log("facebook login status:");
-    console.log(result);
-    if(result.status === 'connected'){
-      $rootScope.fbAccessToken = result.authResponse.accessToken;
-      getMyFacebookInfo();
+  $rootScope.updateFbStatus = function(){
+    ngFB.getLoginStatus().then(function(result){
+      console.log("facebook login status:");
+      console.log(result);
+      if(result.status === 'connected'){
+        $rootScope.fbAccessToken = result.authResponse.accessToken;
+        getMyFacebookInfo();
 
-    }
-  });
+      }
+    });
+  };
+
+  $rootScope.updateFbStatus();
 
 
   function getMyFacebookInfo(){
@@ -555,6 +559,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
       },
       function (error) {
         console.log('Facebook error: ' + error.error_description);
+        callback(false);
       });
   }
 
@@ -734,23 +739,47 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     });
   }
 
-  function getFacebookEvents(page_id, callback){
-    ngFB.api({
-      path: '/search',
-      params: {
-        q: place.name,
-        type: "page",
-        access_token: $rootScope.fbAccessToken,
-        fields: 'description,about,cover,link,place_type,price_range,location,name,website'
-      }
-    }).then(
-      function (events) {
-        console.log(events);
-      },
-      function (error) {
-        console.log('Facebook error: ' + error.error_description);
-      });
+
+  function pad(num, size) {
+    var s = num+"";
+    while (s.length < size) s = "0" + s;
+    return s;
   }
+
+  function showAlert(title, text, button) {
+    var alertPopup = $ionicPopup.alert({
+      title: title,
+      template: text,
+      okText: button,
+      okType: 'button-royal'
+    });
+
+    alertPopup.then(function(res) {
+    });
+  };
+
+  function showConfirm(title, text, buttonOk, buttonNot, success) {
+
+    var confirmPopup = $ionicPopup.confirm({
+      title: title,
+      template: text,
+      buttons: [
+        { text: buttonNot },
+        {
+          text: buttonOk,
+          type: 'button-royal'
+        }]
+    });
+
+    confirmPopup.then(function(res) {
+      if(res) {
+        success;
+      } else {
+
+      }
+    });
+  }
+
 
 
   /* animations and state */
@@ -829,9 +858,28 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   };
 
   $scope.showEvents = function(){
+    $rootScope.updateFbStatus();
     if($rootScope.fbAccessToken != null)
       getFacebookEvents($scope.currentPlace.facebook_id);
-    else alert("Voce precisa logar com o facebook para acessar os eventos deste local");
+    else {
+      showConfirm("Ainda não!?", "Para ter acesso à essa e muitas outras informações, é necessário que você esteja logado(a) no Facebook. Isso tornará sua experiência muito mais completa!", "Logar com Facebook", "Agora não :(", $rootScope.fbLogin());
+    }
+  };
+
+  $scope.showEventsModal = function() {
+    $ionicModal.fromTemplateUrl("templates/events.html", {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function(modal) {
+      $scope.eventsModal = modal;
+      $scope.eventsModal.show();
+    });
+  };
+
+  // Close the modal
+  $scope.closeEventsModal = function() {
+    $scope.eventsModal.hide();
+    $scope.eventsModal.remove()
   };
 
 
@@ -987,6 +1035,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
 
 
       }else{
+        $ionicLoading.hide();
         //if not found on db, save it in db
         //TODO dont increase id when INSERT IGNORE
         var newPlace = {};
@@ -1311,20 +1360,19 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
 
       }else{
         $ionicLoading.hide();
-        return;
-        /*//if not found on db, save it in db
+        //if not found on db, save it in db
         //TODO dont increase id when INSERT IGNORE
         var newPlace = {};
-        newPlace.place_id = place.place_id;
-        newPlace.address = place.vicinity;
-        newPlace.name = place.name;
-        newPlace.lat = place.geometry.location.lat();
-        newPlace.long = place.geometry.location.lng();
-        newPlace.type = place.types[0] + " " + place.types[1] + " " + place.types[2];
+        newPlace.place_id =  $scope.gPlaces[index].place_id;
+        newPlace.address =  $scope.gPlaces[index].formatted_address;
+        newPlace.name =  $scope.gPlaces[index].name;
+        newPlace.lat =  $scope.gPlaces[index].geometry.location.lat();
+        newPlace.long =  $scope.gPlaces[index].geometry.location.lng();
+        newPlace.type =  $scope.gPlaces[index].types[0] + " " +  $scope.gPlaces[index].types[1] + " " +  $scope.gPlaces[index].types[2];
 
         DB.savePlaceIfNotExists(newPlace).then(function(result) {
-          console.log("saved on db: " + place.name);
-        });*/
+          console.log("saved on db: " +  $scope.gPlaces[index].name);
+        });
       }
     });
   }
@@ -1525,6 +1573,9 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
     $scope.thermometerModal = modal;
   });
 
+  $scope.currentPlace = {};
+  $scope.currentPlace.events = [];
+
 
   getPlaceDetails($stateParams.placeId);
 
@@ -1723,6 +1774,7 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
       },
       function (error) {
         console.log('Facebook error: ' + error.error_description);
+        callback(false);
       });
 
 
@@ -1737,14 +1789,32 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
       }
     }).then(
       function (response) {
+        if(response.data.length == 0) {
+          showAlert("Oops :(", "Não há eventos desse local no Facebook...", "OK");
+          return;
+        }
         var events = response.data;
         console.log(events);
-        for(var i = 0; i < events.length; i++){
+        for(var i=0; i < events.length; i++){
           var event = events[i];
-          alert(event.name + ", " + event.attending_count + "confirmados");
+          var date = mysqlTimeStampToDate(event.start_time.replace('T', ' ').substring(0,19));
+          var dia= pad(date.getDate(),2);
+          var mes= pad(date.getMonth() + 1,2);
+          var ano=date.getFullYear();
+          var hora= pad(date.getHours(),2);
+          var minutos = pad(date.getMinutes(),2) ;
+          var dias = ["Dom", "Seg","Ter", "Qua", "Qui", "Sex", "Sáb"];
+          if((new Date()).toDateString() == date.toDateString())
+            event.formatDate = "Hoje às " + hora + ':' + minutos;
+          else
+            event.formatDate = dia + '/' + mes + '/' + ano + ' (' +  dias[date.getDay()]+ ') às ' + hora + ':' + minutos;
+          event.descrOpen = false;
         }
+        $scope.currentPlace.events = events;
+        $scope.showEventsModal();
       },
       function (error) {
+        showAlert("Oops :(", "Não encontramos eventos desse local no Facebook...", "OK");
         console.log('Facebook error: ' + error.error_description);
       });
   }
@@ -1844,6 +1914,45 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
 
 
   }
+  function pad(num, size) {
+    var s = num+"";
+    while (s.length < size) s = "0" + s;
+    return s;
+  }
+
+  function showAlert(title, text, button) {
+    var alertPopup = $ionicPopup.alert({
+      title: title,
+      template: text,
+      okText: button,
+      okType: 'button-royal'
+    });
+
+    alertPopup.then(function(res) {
+    });
+  };
+
+  function showConfirm(title, text, buttonOk, buttonNot, success) {
+
+      var confirmPopup = $ionicPopup.confirm({
+      title: title,
+      template: text,
+      buttons: [
+        { text: buttonNot },
+        {
+          text: buttonOk,
+          type: 'button-royal'
+        }]
+      });
+
+    confirmPopup.then(function(res) {
+      if(res) {
+        success();
+      } else {
+
+      }
+    });
+  };
 
   $scope.getLastReport = function(lastreport){
     if(lastreport == null) return 'Sem dados';
@@ -1896,6 +2005,8 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
     });
   };
 
+
+
   // Close the modal
   $scope.closeImagesModal = function() {
     $scope.imagesModal.hide();
@@ -1903,9 +2014,28 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
   };
 
   $scope.showEvents = function(){
+    $rootScope.updateFbStatus();
     if($rootScope.fbAccessToken != null)
       getFacebookEvents($scope.currentPlace.facebook_id);
-    else alert("Voce precisa logar com o facebook para acessar os eventos deste local");
+    else {
+      showConfirm("Ainda não!?", "Para ter acesso à essa e muitas outras informações, é necessário que você esteja logado(a) no Facebook. Isso tornará sua experiência muito mais completa!", "Logar com Facebook", "Agora não :(", $rootScope.fbLogin());
+    }
+  };
+
+  $scope.showEventsModal = function() {
+    $ionicModal.fromTemplateUrl("templates/events.html", {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function(modal) {
+      $scope.eventsModal = modal;
+      $scope.eventsModal.show();
+    });
+  };
+
+  // Close the modal
+  $scope.closeEventsModal = function() {
+    $scope.eventsModal.hide();
+    $scope.eventsModal.remove()
   };
 
 
@@ -2055,5 +2185,11 @@ app.service('DB', function ($http, Backand) {
 
 
 
+});
+
+app.filter('reverse', function() {
+  return function(items) {
+    return items.slice().reverse();
+  };
 });
 
