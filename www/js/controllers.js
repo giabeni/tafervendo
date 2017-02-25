@@ -890,6 +890,8 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
 app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation, $timeout, $sce, DB, $ionicLoading, $ionicModal, $ionicPopup, ngFB, $rootScope) {
 
+  console.log("oppening suggestions");
+
   //initial variables
   $scope.options = {};
   $scope.options.radius = 2;
@@ -917,8 +919,9 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
 
   function getMyPositionAndSearch(){
     //get current location
-    var geoOptions = {timeout: 3000, enableHighAccuracy: false};
+    var geoOptions = {maximumAge: 60000, timeout: 10000, enableHighAccuracy: false};
     var get = $cordovaGeolocation.getCurrentPosition(geoOptions);
+    console.log("getting position");
     get.then(
       function(position) {
         console.log("Got position ");
@@ -941,6 +944,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
   $scope.gPlaces = [];
 
   function searchPlaces(){
+    console.log("searching places");
 
     $ionicLoading.show({
       animation: 'fade-in',
@@ -957,6 +961,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
   }
 
   function populatePlaces(results, status) {
+    console.log("statuss search: " + status);
     if (status !== google.maps.places.PlacesServiceStatus.OK) {
       console.error("nearby search:" + status);
       return;
@@ -1246,7 +1251,7 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
 
   function getMyPositionAndSearch(){
     //get current location
-    var geoOptions = {timeout: 3000, enableHighAccuracy: false};
+    var geoOptions = {maximumAge: 60000, timeout: 10000, enableHighAccuracy: false};
     var get = $cordovaGeolocation.getCurrentPosition(geoOptions);
     get.then(
       function(position) {
@@ -1784,7 +1789,7 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
       path: '/' + page_id + '/events',
       params: {
         fields: 'cover,attending_count,interested_count,name,description,is_page_owned,start_time,type,ticket_uri',
-        since: Math.floor(Date.now() / 1000),
+        since: Math.floor(Date.now() / 1000) - (60*60*24), //since yesterday
         access_token: $rootScope.fbAccessToken
       }
     }).then(
