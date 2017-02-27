@@ -1,18 +1,37 @@
-app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $ionicModal, $timeout, ngFB) {
+app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $ionicModal, $timeout, ngFB, DB) {
   $rootScope.toggleLeftSideMenu = function() {
     $ionicSideMenuDelegate.toggleLeft();
   };
 
+  
+
   $rootScope.fbLogin = function () {
+    console.log("login facebook...");
     ngFB.login({scope: 'email,public_profile'}).then(
       function (response) {
         if (response.status === 'connected') {
           console.log('Facebook login succeeded');
           $rootScope.fbAccessToken = response.authResponse.accessToken;
+          getLongLivedToken($rootScope.fbAccessToken);
           getMyFacebookInfo();
         } else {
           alert('Facebook login failed');
         }
+      },function(error){
+      	console.log(error);
+      });
+  };
+  
+  $rootScope.fbLogout = function () {
+    console.log("logging out facebook...");
+    ngFB.logout().then(
+      function (response) {
+    	ngFB.updateAccessToken(null);
+      	$rootScope.fbAccessToken = null;
+        window.localStorage.setItem("fbToken", null);
+        $rootScope.updateFbStatus();
+      },function(error){
+      	console.log("error logout:"+ error);
       });
   };
 
@@ -20,15 +39,14 @@ app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $
     ngFB.getLoginStatus().then(function(result){
       console.log("facebook login status:");
       console.log(result);
-      if(result.status === 'connected'){
+      if(result.status === 'connected' && result.authResponse.accessToken != "null"){
         $rootScope.fbAccessToken = result.authResponse.accessToken;
+        getLongLivedToken($rootScope.fbAccessToken);
         getMyFacebookInfo();
-
-      }
+      }else
+          $scope.fbUser = null;
     });
   };
-
-  $rootScope.updateFbStatus();
 
 
   function getMyFacebookInfo(){
@@ -44,9 +62,48 @@ app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $
       },
       function (error) {
         console.log('Facebook error: ' + error.error_description);
+          $scope.fbUser = null;
       });
+      
+      
+  }
+  
+  function getLongLivedToken(shortLivedToken){
+    console.log("Getting long lived facebook token");
+    DB.getFacebookLongLivedToken(shortLivedToken).then(
+    	function(response){
+    		console.log("long lived token:");
+        	$rootScope.fbAccessToken = getParameterByName('access_token', '?'+response.data);
+    		console.log($rootScope.fbAccessToken);
+    		//saves token in device and in session storage  		
+        	window.localStorage.setItem("fbToken", $rootScope.fbAccessToken);
+    		ngFB.updateAccessToken($rootScope.fbAccessToken);
+    	}
+    );   
+    
+	
+	function getParameterByName(name, url) {
+    if (!url) {
+      url = window.location.href;
+    }
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
   }
 
+
+	$rootScope.fbAccessToken = null;
+	//if there is a facebook token saved in the device, use it 
+	if(localStorage.getItem("fbToken") != null){
+    	ngFB.updateAccessToken(localStorage.getItem("fbToken"));
+	 	getMyFacebookInfo();
+	
+	}else $scope.fbUser = null;
+  	$rootScope.updateFbStatus();
 
 
 
@@ -257,6 +314,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     //initialize map
     $scope.map = new google.maps.Map(document.getElementById("map"), mapOptions);
   }
+  
   function addMyPositionMarker(){
 
     //Wait until the map is loaded
@@ -345,6 +403,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
         }, 1500);
     });
   }
+  
   //get places Backand infos and add marker
   function getPlaceExtraInfo(place, index){
     DB.getPlaceByPlaceId(place.place_id).then(function(result){
@@ -422,7 +481,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
     //set image of category
     //TODO add restaurant category
-    if($scope.currentPlace.types.includes('night_club', 'bar'))
+    if($scope.currentPlace.types.includes('night_club') && $scope.currentPlace.types.includes('bar'))
       $scope.currentPlace.category = "Bar Balada";
     else if($scope.currentPlace.types.includes('night_club'))
       $scope.currentPlace.category = "Balada";
@@ -569,19 +628,37 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
       path: '/' + page_id + '/events',
       params: {
         fields: 'cover,attending_count,interested_count,name,description,is_page_owned,start_time,type,ticket_uri',
-        since: Math.floor(Date.now() / 1000),
+        since: Math.floor(Date.now() / 1000) - (60*60*24), //since yesterday
         access_token: $rootScope.fbAccessToken
       }
     }).then(
       function (response) {
+        if(response.data.length == 0) {
+          showAlert("Oops :(", "Não há eventos desse local no Facebook...", "OK");
+          return;
+        }
         var events = response.data;
         console.log(events);
-        for(var i = 0; i < events.length; i++){
+        for(var i=0; i < events.length; i++){
           var event = events[i];
-          alert(event.name + ", " + event.attending_count + "confirmados");
+          var date = mysqlTimeStampToDate(event.start_time.replace('T', ' ').substring(0,19));
+          var dia= pad(date.getDate(),2);
+          var mes= pad(date.getMonth() + 1,2);
+          var ano=date.getFullYear();
+          var hora= pad(date.getHours(),2);
+          var minutos = pad(date.getMinutes(),2) ;
+          var dias = ["Dom", "Seg","Ter", "Qua", "Qui", "Sex", "Sáb"];
+          if((new Date()).toDateString() == date.toDateString())
+            event.formatDate = "Hoje às " + hora + ':' + minutos;
+          else
+            event.formatDate = dia + '/' + mes + '/' + ano + ' (' +  dias[date.getDay()]+ ') às ' + hora + ':' + minutos;
+          event.descrOpen = false;
         }
+        $scope.currentPlace.events = events;
+        $scope.showEventsModal();
       },
       function (error) {
+        showAlert("Oops :(", "Não encontramos eventos desse local no Facebook...", "OK");
         console.log('Facebook error: ' + error.error_description);
       });
   }
@@ -739,7 +816,6 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     });
   }
 
-
   function pad(num, size) {
     var s = num+"";
     while (s.length < size) s = "0" + s;
@@ -857,6 +933,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     $scope.imagesModal.remove()
   };
 
+  
   $scope.showEvents = function(){
     $rootScope.updateFbStatus();
     if($rootScope.fbAccessToken != null)
@@ -876,6 +953,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     });
   };
 
+
   // Close the modal
   $scope.closeEventsModal = function() {
     $scope.eventsModal.hide();
@@ -894,7 +972,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
 
   //initial variables
   $scope.options = {};
-  $scope.options.radius = 2;
+  $scope.options.radius = 10;
 
   $scope.options.maxPrice = 3;
   $scope.prices =["$","$$","$$$","$$$$"];
@@ -983,7 +1061,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
 
       //TODO add restaurant category
       //set category
-      if(place.types.includes('night_club', 'bar'))
+      if(place.types.includes('night_club') && place.types.includes('bar'))
         place.category = "Bar Balada";
       else if(place.types.includes('night_club'))
         place.category = "Balada";
@@ -1306,7 +1384,7 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
 
       //TODO add restaurant category
       //set category
-      if(place.types.includes('night_club', 'bar'))
+      if(place.types.includes('night_club') && place.types.includes('bar'))
         place.category = "Bar Balada";
       else if(place.types.includes('night_club'))
         place.category = "Balada";
@@ -1359,7 +1437,6 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
         $scope.gPlaces[index].weight = calcWeight($scope.gPlaces[index]);
 
         //if it is the last place on array, sort it
-        console.log(index);
         $ionicLoading.hide();
 
 
@@ -1650,7 +1727,7 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
 
           //set image of category
           //TODO add restaurant category
-          if($scope.currentPlace.types.includes('night_club', 'bar'))
+          if($scope.currentPlace.types.includes('night_club') && $scope.currentPlace.types.includes('bar'))
             $scope.currentPlace.category = "Bar Balada";
           else if($scope.currentPlace.types.includes('night_club'))
             $scope.currentPlace.category = "Balada";
@@ -2185,6 +2262,25 @@ app.service('DB', function ($http, Backand) {
         }
       }
     });
+  };
+  
+  //get facebook long lived token
+  service.getFacebookLongLivedToken = function(short_lived_token){
+  	var response = $http ({
+  		method: 'GET',
+  		url: Backand.getApiUrl() + '/1/objects/action/places/?name=getLongLivedToken',
+  		config: {
+    		ignoreError: true
+  		},
+  		params: {
+    		parameters: {
+      			short_lived_token: short_lived_token
+    		}	
+  		}
+	});
+	
+	return response;
+	
   };
 
 

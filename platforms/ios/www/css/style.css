@@ -1,0 +1,409 @@
+/* colors */
+.button.button-royal{
+  background: #441579;
+}
+
+.bar.bar-royal{
+  background: #441579;
+}
+
+/* map */
+.scroll {
+  height: 100%;
+}
+
+#map {
+  width: 100%;
+  height: 92%;
+}
+
+/* genereal -*/
+img{
+  max-width: 100%;
+}
+.button-full.fixed-bottom{
+  position: fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index: 2;
+  margin: 0 ;
+}
+
+.button.icon-left.no-float:before {
+  float:none;
+}
+
+label.item-input-wrapper {
+  background: none;
+  border-bottom: 1px solid #ddd;
+}
+
+.place-info{
+  position: absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  width:100%;
+  background: #ffffff;
+  padding: 5px;
+  z-index: 3;
+  color: #333;
+  line-height: 14px;
+  border-top: 1px solid #de9deb;
+  -webkit-box-shadow: 0 -2px 8px 0 rgba(0,0,0,0.1);
+  box-shadow: 0 -2px 8px 0 rgba(0,0,0,0.1);
+  -webkit-transition: all 400ms ease;
+  -moz-transition: all 400ms ease;
+  -ms-transition: all 400ms ease;
+  -o-transition: all 400ms ease;
+  transition: all 400ms ease;
+}
+
+.place-info:after, .place-info:before {
+  bottom: 100%;
+  left: 50%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.place-info:after {
+  border-color: rgba(255, 255, 255, 0);
+  border-bottom-color: #FFF;
+  border-width: 30px;
+  margin-left: -30px;
+}
+.place-info:before {
+  border-color: rgba(222, 157, 235, 0);
+  border-bottom-color: #de9deb;
+  border-width: 31px;
+  margin-left: -31px;
+}
+
+.place-info large{
+  font-size: 20px;
+  width:100%;
+  display: inline-block;
+}
+
+.place-info small{
+  font-size: 10px;
+  line-height: 10px;
+  width:100%;
+  display: inline-block;
+}
+
+.place-info .photo{
+  height:55px;
+  object-fit: cover;
+}
+
+.place-info .tags{
+  color:#441579;
+}
+
+.place-info .tags h2{
+  color:#441579;
+  padding: 0;
+  font-size:30px;
+  margin:12px 0 0;
+  line-height: 15px;
+  opacity: 0.9;
+}
+
+.place-info .tags img{
+  width: 40px;
+  opacity: 0.85;
+}
+
+.place-info .descr{
+  margin-top: 10px;
+  padding-top: 10px;
+  padding: 10px;
+  color: #333;
+  border-top:1px solid #ddd;
+  min-height: 70px;
+}
+
+.wide-as-needed {
+  overflow: scroll;
+  white-space: nowrap;
+  min-width:100%;
+}
+
+.photos.wide-as-needed{
+  height:93px;
+}
+
+.place-info .photos img{
+  height:90px;
+  margin-right: 1%;
+}
+
+.place-info a.icon{
+  font-size: 28px;
+  color: #441579;
+  margin: 5px;
+}
+
+.place-info .access-site {
+  width: 100%;
+  padding: 5px;
+  color: #441579;
+  line-height: 18px;
+  float: right;
+  text-align: center;
+  background: #ddd;
+}
+
+.place-info#placeView{
+  position: static;
+}
+
+.suggestions{
+  background: #ecdfff;
+}
+.suggestions .place-info{
+  position: static;
+  margin-bottom: 5px;
+  border: none;
+}
+
+.suggestions .place-info:after, .place-info:before {
+  display: none;
+}
+
+.row.options{
+  position: absolute;
+  bottom:0;
+  width:100%;
+  left:0;
+  z-index: 4;
+  background: #ecdfff;
+  color: #441579;
+  font-weight: bold;
+  padding:0;
+}
+
+.row.options .col{
+  border: 1px solid #c3c3c3;
+  border-right:0;
+}
+
+.distance{
+  position: absolute;
+  width:100%;
+  left:0;
+  z-index: 3;
+  background: #ecdfff;
+  color: #441579;
+  border:1px solid #c3c3c3;
+  padding:5px;
+  border-top:5px solid #441579;
+
+  -webkit-transition: all 400ms ease;
+  -moz-transition: all 400ms ease;
+  -ms-transition: all 400ms ease;
+  -o-transition: all 400ms ease;
+  transition: all 400ms ease;
+}
+
+.distance .item.range, .price .item.range{
+  width:100%;
+  background: none;
+  clear: both;
+  border: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  width:20px;
+  height:20px;
+  background: #441579;
+}
+
+
+.price{
+  position: absolute;
+  width:100%;
+  left:0;
+  z-index: 3;
+  background: #ecdfff;
+  color: #441579;
+  border:1px solid #c3c3c3;
+  padding:5px;
+  border-top:5px solid #441579;
+
+  -webkit-transition: all 400ms ease;
+  -moz-transition: all 400ms ease;
+  -ms-transition: all 400ms ease;
+  -o-transition: all 400ms ease;
+  transition: all 400ms ease;
+}
+
+.categories{
+  position: absolute;
+  width:100%;
+  left:0;
+  z-index: 3;
+  background: #ecdfff;
+  color: #441579;
+  border:1px solid #c3c3c3;
+  border-top:5px solid #441579;
+  padding:0;
+
+  -webkit-transition: all 400ms ease;
+  -moz-transition: all 400ms ease;
+  -ms-transition: all 400ms ease;
+  -o-transition: all 400ms ease;
+  transition: all 400ms ease;
+}
+
+.categories .item{
+  background: none;
+}
+
+
+/* Thermometer */
+
+.therm{
+  color: #441579;
+  font-size: 14px;
+}
+
+.therm h6{
+  color: #666;
+}
+
+.therm .therm-wrapper{
+  position: relative;
+  width:100%;
+  height: 370px;
+  margin-top:20px;
+  margin-bottom:20px;
+}
+
+#caption1{
+  position: absolute;
+  top: 20px;
+  left: 40px;
+  color: #e42012;
+}
+
+#caption2{
+  position: absolute;
+  top: 160px;
+  left: 40px;
+  color: #cbab33;
+}
+
+#caption3{
+  position: absolute;
+  bottom: 20px;
+  left: 40px;
+  color: #3c7cee;
+}
+
+#therm-image{
+  width:120px;
+  height:auto;
+  position: absolute;
+  right: 15px;
+}
+
+#therm-spinner{
+  background: none;
+  border: none;
+  -moz-transform: rotate(-90deg);
+  -webkit-transform: rotate(-90deg);
+  -o-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+  transform: rotate(-90deg);
+  position: absolute;
+  right: -109px;
+  top: 154px;
+  width: 370px;
+}
+
+.align-center {
+  text-align: center;
+  margin: 0 auto 0;
+}
+
+/* --images slider */
+.image-list-thumb {
+  padding: 2px 2px 2px 2px;
+  height: 100px;
+}
+
+.image-modal {
+  width: 100% !important;
+  height: 100%;
+  top: 0 !important;
+  left: 0 !important;
+  background: rgba(0,0,0,0.9) !important;
+}
+
+.fullscreen-image {
+  max-width: 100%;
+  max-height: 80%;
+  bottom: 0;
+  left: 0;
+  margin: auto;
+  overflow: auto;
+  position: fixed;
+  right: 0;
+  top: 0;
+}
+
+.slider {
+  width: 100%;
+  height: 100%;
+}
+
+
+.event-descr{
+  color:#333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-box-shadow:inset 0 -5px 5px 2px #FFFFFF;
+  box-shadow:inset 0 -5px 5px 2px #FFFFFF;
+  white-space: nowrap;
+}
+
+.event-title {
+  background: #441579;
+  color: #fff;
+  border: none;
+}
+
+.event-title h2 {
+  font-size:16px;
+  font-weight:bold;
+  color:#fff;
+  white-space: normal;
+
+}
+
+.event-title p{
+  color:#fff;
+  font-size:12px;
+}
+
+.event-descr.open{
+  overflow: auto;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.event-numbers{
+  background: #fff;
+  padding:10px 0;
+}
+.event-numbers span{
+  color: #441579;
+  font-weight: bold;
+}
