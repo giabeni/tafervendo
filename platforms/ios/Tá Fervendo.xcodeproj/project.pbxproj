@@ -5,7 +5,6 @@
 	};
 	objectVersion = 46;
 	objects = {
-
 /* Begin PBXBuildFile section */
 		0207DA581B56EA530066E2B4 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0207DA571B56EA530066E2B4 /* Images.xcassets */; };
 		1ACDA5E383524777ABF10873 /* CDVViewController+SplashScreen.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A647CF0F66E4C0A968BEA21 /* CDVViewController+SplashScreen.m */; };
@@ -22,6 +21,11 @@
 		A547D6977D864FEF843D3B3E /* CDVStatusBar.m in Sources */ = {isa = PBXBuildFile; fileRef = BC5930FE5E164986963FBA0B /* CDVStatusBar.m */; };
 		B672C827F150404DA3BD56CC /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0922F9E5108A4E7FB41505CD /* CoreLocation.framework */; };
 		DAB75A21D9F54EE3B7638602 /* CDVLocation.m in Sources */ = {isa = PBXBuildFile; fileRef = AE090867E7A94D3AAEDABF78 /* CDVLocation.m */; };
+		9951FD110ED940F89611671B /* CDVPluginExt.m in Sources */ = {isa = PBXBuildFile; fileRef = 5D72E669A1E24FE1B4AB1DE2 /* CDVPluginExt.m */; };
+		927418E1BE494FFCB699AD50 /* libCordovaGenericAd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C85678801EBB4C5FA0E6E0A9 /* libCordovaGenericAd.a */; };
+		7A1579DB10944E46B1BE17F3 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE4BBACC19A64304A1803E96 /* CFNetwork.framework */; };
+		5373C01A467546EB8A54823A /* GoogleMobileAds.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AA0AD8394CC4F949D31F277 /* GoogleMobileAds.framework */; };
+		6B112210112F4593B2894AD3 /* CDVAdMob.m in Sources */ = {isa = PBXBuildFile; fileRef = 7807780B680D4AF38D8DF1FC /* CDVAdMob.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -78,6 +82,15 @@
 		EB87FDF41871DAF40020F90C /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = config.xml; path = ../../config.xml; sourceTree = "<group>"; };
 		ED33DF2A687741AEAF9F8254 /* Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
 		F840E1F0165FE0F500CFE078 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = config.xml; path = "Tá Fervendo/config.xml"; sourceTree = "<group>"; };
+		5D72E669A1E24FE1B4AB1DE2 /* CDVPluginExt.m */ = {isa = PBXFileReference; name = "CDVPluginExt.m"; path = "cordova-plugin-extension/CDVPluginExt.m"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; explicitFileType = undefined; includeInIndex = 0; };
+		C85678801EBB4C5FA0E6E0A9 /* libCordovaGenericAd.a */ = {isa = PBXFileReference; name = "libCordovaGenericAd.a"; path = "Tá Fervendo/Plugins/cordova-plugin-extension/libCordovaGenericAd.a"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = archive.ar; explicitFileType = undefined; includeInIndex = 0; };
+		8B5BEF17722E4D5E91C8BEAB /* PluginAdapterDelegate.h */ = {isa = PBXFileReference; name = "PluginAdapterDelegate.h"; path = "cordova-plugin-extension/PluginAdapterDelegate.h"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; explicitFileType = undefined; includeInIndex = 0; };
+		32736D7BC83C468B95B4BC19 /* CDVPluginExt.h */ = {isa = PBXFileReference; name = "CDVPluginExt.h"; path = "cordova-plugin-extension/CDVPluginExt.h"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; explicitFileType = undefined; includeInIndex = 0; };
+		1004B3B5A5AB42CFB13F3A5F /* GenericAdPlugin.h */ = {isa = PBXFileReference; name = "GenericAdPlugin.h"; path = "cordova-plugin-extension/GenericAdPlugin.h"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; explicitFileType = undefined; includeInIndex = 0; };
+		CE4BBACC19A64304A1803E96 /* CFNetwork.framework */ = {isa = PBXFileReference; name = "CFNetwork.framework"; path = "System/Library/Frameworks/CFNetwork.framework"; sourceTree = SDKROOT; fileEncoding = undefined; lastKnownFileType = wrapper.framework; explicitFileType = undefined; includeInIndex = 0; };
+		0AA0AD8394CC4F949D31F277 /* GoogleMobileAds.framework */ = {isa = PBXFileReference; name = "GoogleMobileAds.framework"; path = "Tá Fervendo/Plugins/cordova-admobsdk/GoogleMobileAds.framework"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = wrapper.framework; explicitFileType = undefined; includeInIndex = 0; };
+		7807780B680D4AF38D8DF1FC /* CDVAdMob.m */ = {isa = PBXFileReference; name = "CDVAdMob.m"; path = "cordova-plugin-admob/CDVAdMob.m"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; explicitFileType = undefined; includeInIndex = 0; };
+		1F41C20A31A84DE2A9657DA3 /* CDVAdMob.h */ = {isa = PBXFileReference; name = "CDVAdMob.h"; path = "cordova-plugin-admob/CDVAdMob.h"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,6 +100,9 @@
 			files = (
 				301BF552109A68D80062928A /* libCordova.a in Frameworks */,
 				B672C827F150404DA3BD56CC /* CoreLocation.framework in Frameworks */,
+				927418E1BE494FFCB699AD50 /* libCordovaGenericAd.a in Frameworks */,
+				7A1579DB10944E46B1BE17F3 /* CFNetwork.framework in Frameworks */,
+				5373C01A467546EB8A54823A /* GoogleMobileAds.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -157,6 +173,9 @@
 			isa = PBXGroup;
 			children = (
 				0922F9E5108A4E7FB41505CD /* CoreLocation.framework */,
+				C85678801EBB4C5FA0E6E0A9 /* libCordovaGenericAd.a */,
+				CE4BBACC19A64304A1803E96 /* CFNetwork.framework */,
+				0AA0AD8394CC4F949D31F277 /* GoogleMobileAds.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -198,6 +217,12 @@
 				36D66D8038A6427189B06D7C /* CDVLocation.h */,
 				89F2021E12824D1C9184E82F /* CDVInAppBrowser.m */,
 				D62CAC79492244D3B6AD72DA /* CDVInAppBrowser.h */,
+				5D72E669A1E24FE1B4AB1DE2 /* CDVPluginExt.m */,
+				8B5BEF17722E4D5E91C8BEAB /* PluginAdapterDelegate.h */,
+				32736D7BC83C468B95B4BC19 /* CDVPluginExt.h */,
+				1004B3B5A5AB42CFB13F3A5F /* GenericAdPlugin.h */,
+				7807780B680D4AF38D8DF1FC /* CDVAdMob.m */,
+				1F41C20A31A84DE2A9657DA3 /* CDVAdMob.h */,
 			);
 			name = Plugins;
 			path = "Tá Fervendo/Plugins";
@@ -325,6 +350,8 @@
 				9ADBAF77A4E94F4BAE74ECB2 /* CDVDevice.m in Sources */,
 				DAB75A21D9F54EE3B7638602 /* CDVLocation.m in Sources */,
 				94AE4B4B4BD249028EECE6CF /* CDVInAppBrowser.m in Sources */,
+				9951FD110ED940F89611671B /* CDVPluginExt.m in Sources */,
+				6B112210112F4593B2894AD3 /* CDVAdMob.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -359,6 +386,14 @@
 				INFOPLIST_FILE = "Tá Fervendo/Tá Fervendo-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				PRODUCT_NAME = "Tá Fervendo";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Tá Fervendo/Plugins/cordova-plugin-extension\"",
+				);
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"Tá Fervendo/Plugins/cordova-admobsdk\"",
+				);
 			};
 			name = Debug;
 		};
@@ -379,6 +414,14 @@
 				GCC_VERSION = "";
 				INFOPLIST_FILE = "Tá Fervendo/Tá Fervendo-Info.plist";
 				PRODUCT_NAME = "Tá Fervendo";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Tá Fervendo/Plugins/cordova-plugin-extension\"",
+				);
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"Tá Fervendo/Plugins/cordova-admobsdk\"",
+				);
 			};
 			name = Release;
 		};

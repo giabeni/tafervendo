@@ -31,10 +31,16 @@
         },
         "ionic-plugin-keyboard": {
             "PACKAGE_NAME": "com.ionicframework.tafervendo189999"
+        },
+        "cordova-plugin-admob": {
+            "PACKAGE_NAME": "com.ionicframework.tafervendo189999"
         }
     },
     "dependent_plugins": {
         "cordova-plugin-compat": {
+            "PACKAGE_NAME": "com.ionicframework.tafervendo189999"
+        },
+        "cordova-admobsdk": {
             "PACKAGE_NAME": "com.ionicframework.tafervendo189999"
         }
     }

@@ -135,7 +135,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   var geoOptions = {timeout: 30000, enableHighAccuracy: false};
   var watch = $cordovaGeolocation.watchPosition(geoOptions);
   watch.then(null,
-    function(error){ alert("Could not get location");  },
+    function(error){ console.log("Could not get location");  },
     function(position) {
       console.log("position changed or time passed");
       $scope.myPosition = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
@@ -481,7 +481,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
     //set image of category
     //TODO add restaurant category
-    if($scope.currentPlace.types.includes('night_club', 'bar'))
+    if($scope.currentPlace.types.includes('night_club') && $scope.currentPlace.types.includes('bar'))
       $scope.currentPlace.category = "Bar Balada";
     else if($scope.currentPlace.types.includes('night_club'))
       $scope.currentPlace.category = "Balada";
@@ -628,19 +628,37 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
       path: '/' + page_id + '/events',
       params: {
         fields: 'cover,attending_count,interested_count,name,description,is_page_owned,start_time,type,ticket_uri',
-        since: Math.floor(Date.now() / 1000),
+        since: Math.floor(Date.now() / 1000) - (60*60*24), //since yesterday
         access_token: $rootScope.fbAccessToken
       }
     }).then(
       function (response) {
+        if(response.data.length == 0) {
+          showAlert("Oops :(", "Não há eventos desse local no Facebook...", "OK");
+          return;
+        }
         var events = response.data;
         console.log(events);
-        for(var i = 0; i < events.length; i++){
+        for(var i=0; i < events.length; i++){
           var event = events[i];
-          alert(event.name + ", " + event.attending_count + "confirmados");
+          var date = mysqlTimeStampToDate(event.start_time.replace('T', ' ').substring(0,19));
+          var dia= pad(date.getDate(),2);
+          var mes= pad(date.getMonth() + 1,2);
+          var ano=date.getFullYear();
+          var hora= pad(date.getHours(),2);
+          var minutos = pad(date.getMinutes(),2) ;
+          var dias = ["Dom", "Seg","Ter", "Qua", "Qui", "Sex", "Sáb"];
+          if((new Date()).toDateString() == date.toDateString())
+            event.formatDate = "Hoje às " + hora + ':' + minutos;
+          else
+            event.formatDate = dia + '/' + mes + '/' + ano + ' (' +  dias[date.getDay()]+ ') às ' + hora + ':' + minutos;
+          event.descrOpen = false;
         }
+        $scope.currentPlace.events = events;
+        $scope.showEventsModal();
       },
       function (error) {
+        showAlert("Oops :(", "Não encontramos eventos desse local no Facebook...", "OK");
         console.log('Facebook error: ' + error.error_description);
       });
   }
@@ -831,7 +849,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
     confirmPopup.then(function(res) {
       if(res) {
-        $rootScope.fbLogin();
+        success;
       } else {
 
       }
@@ -915,15 +933,13 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     $scope.imagesModal.remove()
   };
 
+  
   $scope.showEvents = function(){
     $rootScope.updateFbStatus();
     if($rootScope.fbAccessToken != null)
       getFacebookEvents($scope.currentPlace.facebook_id);
     else {
-      showConfirm("Ainda não!?", 
-      	"Para ter acesso à essa e muitas outras informações, é necessário que você esteja logado(a) no Facebook. Isso tornará sua experiência muito mais completa!",
-       	"Logar com Facebook", 
-       	"Agora não :(");
+      showConfirm("Ainda não!?", "Para ter acesso à essa e muitas outras informações, é necessário que você esteja logado(a) no Facebook. Isso tornará sua experiência muito mais completa!", "Logar com Facebook", "Agora não :(", $rootScope.fbLogin());
     }
   };
 
@@ -936,6 +952,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
       $scope.eventsModal.show();
     });
   };
+
 
   // Close the modal
   $scope.closeEventsModal = function() {
@@ -955,7 +972,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
 
   //initial variables
   $scope.options = {};
-  $scope.options.radius = 2;
+  $scope.options.radius = 10;
 
   $scope.options.maxPrice = 3;
   $scope.prices =["$","$$","$$$","$$$$"];
@@ -999,7 +1016,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
         $scope.placesService.nearbySearch(request, populatePlaces);
 
       }),
-      function(error){ alert("Could not get location");  };
+      function(error){ console.log("Could not get location");  };
   }
   //finds places by Google Radar Search
   $scope.gPlaces = [];
@@ -1044,7 +1061,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
 
       //TODO add restaurant category
       //set category
-      if(place.types.includes('night_club', 'bar'))
+      if(place.types.includes('night_club') && place.types.includes('bar'))
         place.category = "Bar Balada";
       else if(place.types.includes('night_club'))
         place.category = "Balada";
@@ -1331,7 +1348,7 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
         $scope.placesService.textSearch(request, populatePlaces);
 
       }),
-      function(error){ alert("Could not get location");  };
+      function(error){ console.log("Could not get location");  };
   }
   //finds places by Google Radar Search
   $scope.gPlaces = [];
@@ -1367,7 +1384,7 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
 
       //TODO add restaurant category
       //set category
-      if(place.types.includes('night_club', 'bar'))
+      if(place.types.includes('night_club') && place.types.includes('bar'))
         place.category = "Bar Balada";
       else if(place.types.includes('night_club'))
         place.category = "Balada";
@@ -1420,7 +1437,6 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
         $scope.gPlaces[index].weight = calcWeight($scope.gPlaces[index]);
 
         //if it is the last place on array, sort it
-        console.log(index);
         $ionicLoading.hide();
 
 
@@ -1711,7 +1727,7 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
 
           //set image of category
           //TODO add restaurant category
-          if($scope.currentPlace.types.includes('night_club', 'bar'))
+          if($scope.currentPlace.types.includes('night_club') && $scope.currentPlace.types.includes('bar'))
             $scope.currentPlace.category = "Bar Balada";
           else if($scope.currentPlace.types.includes('night_club'))
             $scope.currentPlace.category = "Balada";

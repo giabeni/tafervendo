@@ -1,0 +1,122 @@
+<ion-view view-title="" class="suggestions" hide-back-button="false" hide-nav-bar="true" id="searchView">
+
+
+  <div class="bar bar-header item-input-inset">
+    <button class="button button-icon ion-ios-arrow-back" ng-click="goBack()" style="color: #441579;">
+    </button>
+      <label class="item-input-wrapper">
+        <form ng-submit="refresh()">
+          <input type="search" placeholder="Pesquisar local, evento, região..." ng-model="query">
+        </form>
+      </label>
+    <i class="icon ion-search" style="color: #441579;font-size:26px" ng-click="refresh()"></i>
+  </div>
+
+  <ion-content scroll="true" style="top:44px; bottom: 55px; position: absolute;">
+    <div class="place-info" ng-repeat="place in gPlaces track by $index" ng-click="goToPlace(place.place_id)" ng-hide="place.hide">
+
+      <div class="row">
+        <div class="col col-10">
+          <img src="{{getThermIcon(place.status, place.lastreport)}}"/>
+        </div>
+        <div class="col">
+          <large>{{place.name}}</large>
+          <small>{{place.formatted_address}}</small>
+          <small>{{place.distanceText}}</small>
+          <small><b>{{getLastReport(place.lastreport)}}</b></small>
+        </div>
+        <div class="col col-20" style="padding: 0;">
+          <img src="{{place.photo}}" class="photo"/>
+        </div>
+      </div>
+
+
+      <div class="row tags">
+        <div class="col text-center">
+          <img src="img/{{place.category}}.png"/><br>
+          {{place.category}}
+        </div>
+        <div class="col text-center">
+          <h2>{{currentPlace.rating || "?"}}</h2><br>
+          Estrelas
+        </div>
+        <div class="col text-center">
+          <img src="img/money.png"/><br>
+          {{place.price == null ? '?' : place.price}}
+        </div>
+        <div class="col col-20 text-center" style="background: #441579; color: #fff; font-size: 10px;">
+          <img src="img/plus.png" style="opacity: 1"/>
+          Mais
+        </div>
+      </div>
+    </div>
+
+  </ion-content>
+
+  <div class="row options">
+    <div class="col text-center" ng-click="toggle('distance')">
+      até <br>
+      {{options.radius}}km
+    </div>
+    <div class="col text-center" ng-click="toggle('price')">
+      até <br> {{prices[options.maxPrice]}}
+    </div>
+    <div class="col text-center" ng-click="toggle('categories')">
+      Escolher Categorias
+    </div>
+  </div>
+
+  <div class="distance option" id="distance" style="bottom: -182px;">
+    Distância até: <b>{{ options.radius}}km</b><br>
+    <div class="item range">
+      1km
+      <input type="range" name="volume" min="1" max="50" value="10" ng-model="options.radius" on-release="refresh()">
+      50km
+    </div>
+  </div>
+
+  <div class="price option" id="price" style="bottom: -182px;" >
+    Preço Máximo: <b>{{ prices[options.maxPrice]}}</b><br>
+    <div class="item range">
+      $
+      <input type="range" name="volume" min="0" max="3"  ng-model="options.maxPrice" step="1" on-release="refresh()">
+      $$$$
+    </div>
+  </div>
+
+  <div class="categories option" id="categories" style="bottom: -182px;">
+    <ul class="list">
+      <li class="item item-toggle">
+        Balada
+        <label class="toggle toggle">
+          <input type="checkbox" ng-checked="options.night_club" ng-model="options.night_club" ng-change="refresh()">
+          <div class="track">
+            <div class="handle"></div>
+          </div>
+        </label>
+      </li>
+
+      <li class="item item-toggle">
+        Bar
+        <label class="toggle toggle">
+          <input type="checkbox" ng-checked="options.bar" ng-model="options.bar" ng-change="refresh()">
+          <div class="track">
+            <div class="handle"></div>
+          </div>
+        </label>
+      </li>
+
+      <li class="item item-toggle">
+        Restaurante
+        <label class="toggle toggle">
+          <input type="checkbox" ng-checked="options.restaurant" ng-model="options.restaurant" ng-change="refresh()">
+          <div class="track">
+            <div class="handle"></div>
+          </div>
+        </label>
+      </li>
+
+
+    </ul>
+  </div>
+</ion-view>
