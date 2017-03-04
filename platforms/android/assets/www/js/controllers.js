@@ -135,7 +135,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   var geoOptions = {timeout: 30000, enableHighAccuracy: false};
   var watch = $cordovaGeolocation.watchPosition(geoOptions);
   watch.then(null,
-    function(error){ alert("Could not get location");  },
+    function(error){ console.log("Could not get location");  },
     function(position) {
       console.log("position changed or time passed");
       $scope.myPosition = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
@@ -1016,7 +1016,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
         $scope.placesService.nearbySearch(request, populatePlaces);
 
       }),
-      function(error){ alert("Could not get location");  };
+      function(error){ console.log("Could not get location");  };
   }
   //finds places by Google Radar Search
   $scope.gPlaces = [];
@@ -1348,7 +1348,7 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
         $scope.placesService.textSearch(request, populatePlaces);
 
       }),
-      function(error){ alert("Could not get location");  };
+      function(error){ console.log("Could not get location");  };
   }
   //finds places by Google Radar Search
   $scope.gPlaces = [];

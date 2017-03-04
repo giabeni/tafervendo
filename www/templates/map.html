@@ -79,6 +79,8 @@
       <div class="col col-30">
         <a class="icon ion-social-facebook" href="{{currentPlace.facebook}}"></a>
         <!--<a class="icon ion-social-instagram"></a>-->
+        <icon class="icon ion-android-star-outline ion-android-star" ng-click="setFavorite(currentPlace.place_id)"
+              ng-class="{'ion-android-star': currentPlace.favorite, 'ion-android-star-outline': !currentPlace.favorite}"></icon>
       </div>
       <div class="col">
         <a class="button-icon icon-left ion-ios-world-outline access-site"

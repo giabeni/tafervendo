@@ -1,0 +1,53 @@
+<ion-view view-title="Favoritos" class="suggestions" hide-back-button="false" id="favView" style="padding-bottom: 50px;">
+
+  <ion-nav-bar class="bar-royal">
+    <ion-nav-back-button></ion-nav-back-button>
+  </ion-nav-bar>
+  <ion-nav-buttons side="right">
+    <button class="button button-icon icon ion-ios-refresh-empty " ng-click="refresh()">
+    </button>
+  </ion-nav-buttons>
+
+  <ion-content scroll="true">
+    <div class="place-info" ng-repeat="place in gPlaces track by $index" ng-click="goToPlace(place.place_id)">
+
+      <div class="row">
+        <div class="col col-10">
+          <img src="{{getThermIcon(place.status, place.lastreport)}}"/>
+        </div>
+        <div class="col">
+          <large>{{place.name}}</large>
+          <small>{{place.vicinity}}</small>
+          <small>{{place.distanceText}}</small>
+          <small><b>{{getLastReport(place.lastreport)}}</b></small>
+        </div>
+        <div class="col col-20" style="padding: 0;">
+          <img src="{{place.photo}}" class="photo"/>
+        </div>
+      </div>
+
+
+      <div class="row tags">
+        <div class="col text-center">
+          <img src="img/{{place.category}}.png"/><br>
+          {{place.category}}
+        </div>
+        <div class="col text-center">
+          <h2>{{place.rating || "?"}}</h2><br>
+          Estrelas
+        </div>
+        <div class="col text-center">
+          <img src="img/money.png"/><br>
+          {{place.price == null ? '?' : place.price}}
+        </div>
+        <div class="col col-20 text-center" style="background: #441579; color: #fff; font-size: 10px;">
+          <img src="img/plus.png" style="opacity: 1"/>
+          Mais
+        </div>
+      </div>
+    </div>
+
+  </ion-content>
+
+
+</ion-view>

@@ -144,7 +144,7 @@ label.item-input-wrapper {
   margin-right: 1%;
 }
 
-.place-info a.icon{
+.place-info a.icon, .place-info icon.icon{
   font-size: 28px;
   color: #441579;
   margin: 5px;
@@ -412,4 +412,18 @@ input[type="range"]::-webkit-slider-thumb {
 
 .slider-pager .slider-pager-page {
 	color: #fff;
+}
+
+.tabs-top.tabs-striped .tab-item {
+  font-size: 20px;
+}
+
+.tabs-striped.tabs-color-royal .tab-item {
+  color: rgba(136, 106, 234, 0.6);
+  opacity: 1;
+}
+
+.tabs-striped.tabs-color-royal .tab-item.tab-item-active, .tabs-striped.tabs-color-royal .tab-item.active, .tabs-striped.tabs-color-royal .tab-item.activated {
+  color: #441579;
+  border: 0 solid #441579;
 }
