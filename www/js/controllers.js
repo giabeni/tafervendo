@@ -1,4 +1,50 @@
 app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $ionicModal, $timeout, ngFB, DB, Favorites, $state) {
+
+
+  /*var testPlace = {};
+  testPlace.place_id = 'TestInsert6';
+  testPlace.description = 'Descr';
+  testPlace.price = '$$';
+  testPlace.facebook = 'facebook';
+  testPlace.facebook_id = "fbid.22";
+  testPlace.website = "site";
+
+  var testReport = {};
+    testReport.status = 5;
+    testReport.place_id = "TestInsert6";
+    $http ({
+        method: 'GET',
+        url: "http://tafervendo.integrastudio.com.br/tafervendo/api/insertReport",
+        params: testReport
+    }).then(function (response) {
+            console.log( " saving report  ");
+            console.log(response);
+
+        $http ({
+            method: 'GET',
+            url: "http://tafervendo.integrastudio.com.br/tafervendo/api/reports",
+            params: testReport
+        }).then(function (response) {
+                console.log( " getting reports  ");
+                console.log(response);
+
+            },function (error){
+                console.log("error newdb:");
+                console.warn(error);
+            }
+        );
+
+        },function (error){
+            console.log("error newdb:");
+            console.warn(error);
+        }
+    );
+
+
+*/
+
+
+
   $rootScope.toggleLeftSideMenu = function() {
     $ionicSideMenuDelegate.toggleLeft();
   };
@@ -430,8 +476,8 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   //get places Backand infos and add marker
   function getPlaceExtraInfo(place, index){
     DB.getPlaceByPlaceId(place.place_id).then(function(result){
-      $scope.places[index].status = result.data[0].status;
-      $scope.places[index].lastreport = result.data[0].lastreport;
+      $scope.places[index].status = typeof result.data[0] == "undefined" ? 0 : result.data[0].status;
+      $scope.places[index].lastreport = typeof result.data[0] == "undefined" ? 0 : result.data[0].lastreport;
       //TODO add more details
       addPlaceMarker(place, index);
     });
@@ -2480,7 +2526,7 @@ app.controller('FavoritesCtrl', function($scope, $state, $timeout, $sce, DB, $io
 });
 
 
-app.service('DB', function ($http, Backand) {
+app.service('oldDB', function ($http, Backand) {
   var service = this,
     baseUrl = '/1/objects/',
     objectPlaces = 'places/',
@@ -2640,6 +2686,102 @@ app.service('DB', function ($http, Backand) {
 
 
 
+});
+
+app.service('DB', function($http){
+
+    var service = this,
+        queryUrl = "http://tafervendo.integrastudio.com.br/tafervendo/api/";
+
+    function escapeString(title) {
+        title = title.replace(/'/g, "");
+        title = escape(title);
+        return title
+    }
+    service.savePlaceIfNotExists= function(place){
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "insertPlace",
+            params: {
+              'place_id': place.place_id,
+              'address': escapeString(place.address),
+              'name': escapeString(place.name),
+              'type': place.type,
+              'lat': place.lat,
+              'long': place.long
+            }
+        });
+    };
+
+    service.getPlaceByPlaceId = function (place_id){
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "place",
+            params: {
+              place_id: place_id
+            }
+        });
+    };
+
+    service.updatePlace = function(place_id, place){
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "updatePlace",
+            params: {
+              description: place.description,
+              price: place.price,
+              facebook: place.facebook,
+              facebook_id: place.facebook_id,
+              place_id: place_id,
+              website: place.website
+            }
+        });
+    };
+
+    service.updateStatus = function(place_id, status, lastreport){
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "updateStatus",
+            params: {
+              place_id: place_id,
+              status: status,
+              lastreport: lastreport
+            }
+        });
+    };
+
+
+    service.saveReport = function (object) {
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "insertReport",
+            params: object
+        });
+    };
+
+    service.getReportsFromPlaceId = function (place_id) {
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "reports",
+            params: {
+              place_id: place_id
+            }
+        });
+    };
+
+
+    //get facebook long lived token
+    service.getFacebookLongLivedToken = function(short_lived_token) {
+        var response = $http ({
+            method: 'GET',
+            url: "http://tafervendo.integrastudio.com.br/tafervendo/getFacebookToken.php",
+            params: {
+              token: short_lived_token
+            }
+        });
+
+        return response;
+    };
 });
 
 app.service('Favorites', function ($rootScope) {
