@@ -1,10 +1,16 @@
-app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $ionicModal, $timeout, ngFB, DB) {
+app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $ionicModal, $timeout, ngFB, DB, Favorites, $state) {
+
+
   $rootScope.toggleLeftSideMenu = function() {
     $ionicSideMenuDelegate.toggleLeft();
   };
 
-  
+  $rootScope.goTo = function(state){
+    $state.go(state);
+  };
 
+
+  /* Facebook functions */
   $rootScope.fbLogin = function () {
     console.log("login facebook...");
     ngFB.login({scope: 'email,public_profile'}).then(
@@ -21,7 +27,7 @@ app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $
       	console.log(error);
       });
   };
-  
+
   $rootScope.fbLogout = function () {
     console.log("logging out facebook...");
     ngFB.logout().then(
@@ -64,24 +70,24 @@ app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $
         console.log('Facebook error: ' + error.error_description);
           $scope.fbUser = null;
       });
-      
-      
+
+
   }
-  
+
   function getLongLivedToken(shortLivedToken){
     console.log("Getting long lived facebook token");
     DB.getFacebookLongLivedToken(shortLivedToken).then(
     	function(response){
     		console.log("long lived token:");
-        	$rootScope.fbAccessToken = getParameterByName('access_token', '?'+response.data);
+        	$rootScope.fbAccessToken = response.data;
     		console.log($rootScope.fbAccessToken);
-    		//saves token in device and in session storage  		
+    		//saves token in device and in session storage
         	window.localStorage.setItem("fbToken", $rootScope.fbAccessToken);
     		ngFB.updateAccessToken($rootScope.fbAccessToken);
     	}
-    );   
-    
-	
+    );
+
+
 	function getParameterByName(name, url) {
     if (!url) {
       url = window.location.href;
@@ -97,20 +103,18 @@ app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $
 
 
 	$rootScope.fbAccessToken = null;
-	//if there is a facebook token saved in the device, use it 
-	if(localStorage.getItem("fbToken") != null){
+	//if there is a facebook token saved in the device, use it
+	if(localStorage.getItem("fbToken") !== null && localStorage.getItem("fbToken") !== 'null'){
     	ngFB.updateAccessToken(localStorage.getItem("fbToken"));
 	 	getMyFacebookInfo();
-	
+
 	}else $scope.fbUser = null;
   	$rootScope.updateFbStatus();
 
 
-
 });
 
-app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout, $sce, DB, $ionicLoading, $ionicModal, $ionicPopup, ngFB, $rootScope, $ionicSlideBoxDelegate) {
-
+app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout, $sce, DB, $ionicLoading, $ionicModal, $ionicPopup, ngFB, $rootScope, $ionicSlideBoxDelegate, Favorites) {
 
   //global variables
   $scope.places = [];
@@ -158,7 +162,10 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
       }
 
       if ($scope.firstLoad || getDistanceFromLatLonInKm(position, $scope.lastPosition, true) > 0.2) {
-        searchNearByPlaces();
+        if($scope.firstLoad )
+          searchNearByPlaces($scope.myPosition);
+        else
+          searchNearByPlaces($scope.mapCenter);
       }
       if(!$scope.firstLoad) updateStatusMarkers();
       $scope.lastPosition = position;
@@ -311,10 +318,24 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
       clickableIcons: false
     };
 
+    $scope.mapCenter = $scope.myPosition;
+
     //initialize map
     $scope.map = new google.maps.Map(document.getElementById("map"), mapOptions);
+
+    //Reload markers every time the map moves
+    google.maps.event.addListener($scope.map, 'dragend', function(){
+      console.log("map moved!");
+      var newCenter = $scope.map.getCenter();
+      if(getDistanceFromLatLonInKm(newCenter, $scope.mapCenter, false) > 1){
+        console.log("map moved more than 1 km!");
+        searchNearByPlaces(newCenter);
+        $scope.mapCenter = newCenter;
+      }
+    });
+
   }
-  
+
   function addMyPositionMarker(){
 
     //Wait until the map is loaded
@@ -336,10 +357,10 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     marker.setPosition(position);
   }
 
-  function searchNearByPlaces(){
+  function searchNearByPlaces(center){
     //set filters
     var request = {
-      location: $scope.myPosition,
+      location: center,
       //radius: '5000',
       types: ['bar', 'night_club'],
       rankBy: google.maps.places.RankBy.DISTANCE,
@@ -350,29 +371,54 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     $scope.placeService = new google.maps.places.PlacesService($scope.map);
     //trigger the search
     $scope.placeService.nearbySearch(request, addPlacesOnMap);
+
+
+
   }
 
   function addPlacesOnMap(results, status){
+    $scope.loadingMarkers = true;
     if (status == google.maps.places.PlacesServiceStatus.OK) {
       //clear the places array and update it
-      clearAllMarkers();
+
+      /*clearAllMarkers();
       $scope.places = [];
-      $scope.places = results;
+      $scope.places = results;*/
+
+      $scope.count = 0;
+      $scope.resultsLength = results.length;
 
       for (var i = 0; i < results.length; i++) {
         //for each place found, create marker
         var place = results[i];
-        //get status and add marker
-        getPlaceExtraInfo(place, i);
+
+        /*if place is already on the array, just update the marker if necessary
+          else, set new index and then add marker and get info
+         */
+        if(!$scope.places.includes(place)) {
+            $scope.places.push(place);
+            var newPlaceIndex = $scope.places.indexOf(place);
+            addPlaceMarker(place, newPlaceIndex);
+            getPlaceExtraInfo(place, newPlaceIndex);
+        }else{
+            DB.getPlaceByPlaceId(place.place_id).then(function(result){
+              if(result.data[0].status != $scope.places[index].status ){
+                $scope.places[index].status =  (result.data == 'false' || typeof result.data[0] == 'undefined') ? 0 : result.data[0].status;
+                $scope.places[index].lastreport =  (result.data == 'false' || typeof result.data[0] == 'undefined') ? 0 : result.data[0].lastreport;
+                updateThermometerMarker(index);
+              }
+            });
+
+            $scope.count++;
+        }
         console.log(place);
 
 
         //if user is close to place, suggest colaboration
         if(getDistanceFromLatLonInKm($scope.myPosition, place.geometry.location, false) < 0.05 && !$scope.firstLoad){
-          showNearConfirm(place.name, i);
+          showNearConfirm(place.name, typeof newPlaceIndex == 'undefined' ? i : newPlaceIndex);
         }
 
-        //TODO dont increase id when INSERT IGNORE
         var newPlace = {};
         newPlace.place_id = place.place_id;
         newPlace.address = place.vicinity;
@@ -381,12 +427,15 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
         newPlace.long = place.geometry.location.lng();
         newPlace.type = place.types[0] + " " + place.types[1] + " " + place.types[2];
 
-
+        console.log("saving:" + newPlace.place_id);
         DB.savePlaceIfNotExists(newPlace).then(function(result) {
-          $ionicLoading.hide();
+
+         if(!Array.isArray(result.data) )
+            console.log("saved on id: " + result.data);
+        $ionicLoading.hide();
+        }, function(error){
+          console.warn(error);
         });
-
-
 
       }
     }else alert("Erro ao encontrar locais:"+ status);
@@ -403,21 +452,37 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
         }, 1500);
     });
   }
-  
-  //get places Backand infos and add marker
+
+    function clearMarker(index){
+        console.log('clearing specific marker');
+        $scope.places[index].marker.setMap(null);
+    }
+
+  //get places DB infos and add marker
   function getPlaceExtraInfo(place, index){
     DB.getPlaceByPlaceId(place.place_id).then(function(result){
-      $scope.places[index].status = result.data[0].status;
-      $scope.places[index].lastreport = result.data[0].lastreport;
-      //TODO add more details
-      addPlaceMarker(place, index);
+        $scope.count++;
+        if($scope.count == $scope.resultsLength)
+            $scope.loadingMarkers = false;
+
+      $scope.places[index].status =  (result.data == 'false' || typeof result.data[0] == 'undefined') ? 0 : result.data[0].status;
+      $scope.places[index].lastreport =  (result.data == 'false' || typeof result.data[0] == 'undefined') ? 0 : result.data[0].lastreport;
+      updateThermometerMarker(index);
+    }, function(error){
+        $scope.count++;
+
+        if($scope.count == $scope.resultsLength)
+            $scope.loadingMarkers = false;
+
+      console.warn("error:" + place.place_id);
+      console.warn(error);
     });
+
   }
 
   function addPlaceMarker(place, index){
     var status = getThermometerMark($scope.places[index].status, $scope.places[index].lastreport);
     //Wait until the map is loaded
-    google.maps.event.addListenerOnce($scope.map, 'idle', function(){
 
       var animation;
       if($scope.firstLoad == true)
@@ -438,11 +503,11 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
         $timeout(function(){$scope.openPlace(index)}, 300);
         $scope.map.panTo($scope.currentPlace.geometry.location);
 
+
       });
 
-      $scope.firstLoad = false;
 
-    });
+      $scope.firstLoad = false;
 
 
   }
@@ -456,6 +521,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   }
 
   function getThermometerMark(status, lastreport){
+    if(status == null || lastreport == null) return 0;
     if(getDateInterval(lastreport) > 3 ) return 0; //if lastreport was earlier than 3 hrs ago, ignore
     if(status == 0 || status == null) return 0;
     if(status < 1.5) return 1;
@@ -472,6 +538,9 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
   function setCurrentPlace(index){
     $scope.currentPlace = $scope.places[index];
+
+    //check if is favorite
+    $scope.currentPlace.favorite = Favorites.isFavorite($scope.currentPlace.place_id);
 
     //set current place main photo
     if(typeof $scope.currentPlace.photos != 'undefined')
@@ -666,6 +735,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   function saveThermometerReport(){
     $scope.currentReport.place_id = $scope.currentPlace.place_id;
     $scope.currentReport.time = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    $scope.loadingMarkers = true;
     $ionicLoading.show({
       animation: 'fade-in',
       showBackdrop: true,
@@ -716,7 +786,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   function getDateInterval(lastreport){
     if(lastreport == null) return null;
     var now = new Date();
-    lastreport = lastreport.replace('T', ' ');
+    //lastreport = lastreport.replace('T', ' ');
     var dateReport = mysqlTimeStampToDate(lastreport);
     dateReport.setHours ( dateReport.getHours() - 3 );
     var diffMs = (now - dateReport); // milliseconds between now & dateReport
@@ -770,26 +840,19 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
   function updateStatusMarkers(){
 
-    clearAllMarkers();
+    $scope.loadingMarkers = true;
+
+    //clearAllMarkers();
     $scope.zindex++;
     $scope.places.forEach(function(item, index) {
       getPlaceExtraInfo(item, index);
-      updateThermometerMarker(item);
-    });
-
-    //hack to avoid waiting time until markers shows up
-    google.maps.event.addListener($scope.map, 'idle', function(event) {
-      var cnt = $scope.map.getCenter();
-      cnt.e+=0.000001;
-      $scope.map.panTo(cnt);
-      cnt.e-=0.000001;
-      $scope.map.panTo(cnt);
+      updateThermometerMarker(index);
     });
   }
 
-  function updateThermometerMarker(place) {
-    var status = getThermometerMark(place.status, place.lastreport);
-    place.marker.setIcon("img/thermometer/"+status+".png");
+  function updateThermometerMarker(index) {
+    var status = getThermometerMark($scope.places[index].status, $scope.places[index].lastreport);
+    $scope.places[index].marker.setIcon("img/thermometer/"+status+".png");
   }
 
   function showNearConfirm(name, index) {
@@ -933,7 +996,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     $scope.imagesModal.remove()
   };
 
-  
+
   $scope.showEvents = function(){
     $rootScope.updateFbStatus();
     if($rootScope.fbAccessToken != null)
@@ -960,6 +1023,11 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     $scope.eventsModal.remove()
   };
 
+  /* Favorite functions */
+  $scope.setFavorite = function(place_id){
+    Favorites.setFavorite(place_id);
+    $scope.currentPlace.favorite = Favorites.isFavorite(place_id);
+  };
 
 
 
@@ -1042,6 +1110,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
     console.log("statuss search: " + status);
     if (status !== google.maps.places.PlacesServiceStatus.OK) {
       console.error("nearby search:" + status);
+      $ionicLoading.hide();
       return;
     }
 
@@ -1299,9 +1368,13 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
   };
 });
 
-app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $timeout, $sce, DB, $ionicLoading, $ionicModal, $ionicPopup, ngFB, $rootScope, $stateParams, $ionicHistory) {
+app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $timeout, $sce, DB, $ionicLoading, $ionicModal, $ionicPopup, ngFB, $rootScope, $stateParams, $ionicHistory, $ionicSlideBoxDelegate) {
 
   //initial variables
+  $scope.tabs = {};
+  $scope.tabs.places = true;
+  $scope.tabs.events = false;
+
   $scope.options = {};
   $scope.options.radius = 20;
 
@@ -1326,7 +1399,6 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
   searchPlaces();
 
 
-
   function getMyPositionAndSearch(){
     //get current location
     var geoOptions = {maximumAge: 60000, timeout: 10000, enableHighAccuracy: false};
@@ -1335,8 +1407,12 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
       function(position) {
         console.log("Got position ");
         $scope.myPosition = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+        $scope.myGeoPosition = position.coords;
         $rootScope.myPosition = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
         console.log($scope.myPosition.lat() + ' ' + $scope.myPosition.lng());
+
+
+        searchEvents();
 
         var request = {
           location: $scope.myPosition,
@@ -1372,6 +1448,7 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
   function populatePlaces(results, status) {
     if (status !== google.maps.places.PlacesServiceStatus.OK) {
       console.error("nearby search:" + status);
+      $ionicLoading.hide();
       return;
     }
 
@@ -1496,13 +1573,68 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
     return weight;
   }
 
+  function searchEvents(){
+
+    $scope.events = [];
+    ngFB.api({
+      path: '/search',
+      params: {
+        q: $scope.query,
+        type: 'event',
+        fields: 'cover,attending_count,interested_count,name,description,is_page_owned,start_time,type,ticket_uri,place',
+        since: Math.floor(Date.now() / 1000) - (60*60*24), //since yesterday
+        access_token: $rootScope.fbAccessToken,
+        center: roundN(0.01,$scope.myPosition.lat()) + ',' + roundN(0.01,$scope.myPosition.lng()),
+        distance: 50000
+      }
+    }).then(
+      function (response) {
+        if(response.data.length == 0) {
+          console.log("no event found");
+          return;
+        }
+        var events = response.data;
+        console.log(events);
+        for(var i=0; i < events.length; i++){
+          var event = events[i];
+
+          //hide if is not close to myPostio
+          if(getDistanceFromLatLonInKm($scope.myGeoPosition, event.place.location, true) < 200) {
+
+            var date = mysqlTimeStampToDate(event.start_time.replace('T', ' ').substring(0, 19));
+            var dia = pad(date.getDate(), 2);
+            var mes = pad(date.getMonth() + 1, 2);
+            var ano = date.getFullYear();
+            var hora = pad(date.getHours(), 2);
+            var minutos = pad(date.getMinutes(), 2);
+            var dias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+            if ((new Date()).toDateString() == date.toDateString())
+              event.formatDate = "Hoje às " + hora + ':' + minutos;
+            else
+              event.formatDate = dia + '/' + mes + '/' + ano + ' (' + dias[date.getDay()] + ') às ' + hora + ':' + minutos;
+
+            event.descrOpen = false;
+
+            $scope.events.push(event);
+
+          }
+        }
+
+
+        console.log($scope.events);
+      },
+      function (error) {
+        console.log('Facebook Event error: ' + error.error_description);
+      });
+  }
+
   function getDistanceFromLatLonInKm(pos1,pos2, geo) {
     if(geo){
-      var lat1 = pos1.coords.latitude ;
-      var lon1 = pos1.coords.longitude ;
+      var lat1 = pos1.latitude ;
+      var lon1 = pos1.longitude ;
 
-      var lat2 = pos2.coords.latitude;
-      var lon2 = pos2.coords.longitude;
+      var lat2 = pos2.latitude;
+      var lon2 = pos2.longitude;
 
     }else{
       var lat1 =  pos1.lat();
@@ -1552,6 +1684,11 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
       return Math.floor(x/N) * N;
     else
       return N;
+  }
+  function pad(num, size) {
+    var s = num+"";
+    while (s.length < size) s = "0" + s;
+    return s;
   }
   function getThermometerMark(status, lastreport){
     if(getDateInterval(lastreport) > 3 ) return 0; //if lastreport was earlier than 3 hrs ago, ignore
@@ -1639,10 +1776,35 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
   $scope.goBack = function(){
     $ionicHistory.goBack();
   };
+
+  $scope.goToTab = function(tab){
+    if(tab == 'places' && !$scope.tabs.places){
+      $scope.tabs.places = true;
+      $scope.tabs.events = false;
+
+      $ionicSlideBoxDelegate.$getByHandle('slider').slide(0,200);
+    }
+    else if(tab == 'events' && !$scope.tabs.events){
+      $scope.tabs.events = true;
+      $scope.tabs.places = false;
+      $ionicSlideBoxDelegate.$getByHandle('slider').slide(1, 200);
+    }
+  };
+
+  $scope.changeTab = function(index){
+    if(index == 0){
+      $scope.tabs.places = true;
+      $scope.tabs.events = false;
+    }
+    else if(index == 1){
+      $scope.tabs.events = true;
+      $scope.tabs.places = false;
+    }
+  };
 });
 
 
-app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, $timeout, $sce, DB, $ionicLoading, $ionicModal, $ionicPopup, ngFB, $rootScope, $ionicSlideBoxDelegate ) {
+app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, $timeout, $sce, DB, $ionicLoading, $ionicModal, $ionicPopup, ngFB, $rootScope, $ionicSlideBoxDelegate, Favorites ) {
 
   /* initial variables */
 
@@ -1701,6 +1863,9 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
 
     $scope.hideSpinner = false;
     $scope.noPhotos = false;
+
+
+
     var request = {
       placeId: place_id
     };
@@ -1714,6 +1879,15 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
 
 
           $scope.currentPlace = place;
+
+
+          //check if it is favorite
+          $scope.currentPlace.favorite = Favorites.isFavorite(place_id);
+          console.log("favorite: " + $scope.currentPlace.favorite);
+
+
+
+
           $scope.currentPlace.allPhotos = place.photos;
           if(typeof place.photos == "undefined") {
             $scope.noPhotos = true;
@@ -2087,8 +2261,6 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
     });
   };
 
-
-
   // Close the modal
   $scope.closeImagesModal = function() {
     $scope.imagesModal.hide();
@@ -2120,13 +2292,250 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
     $scope.eventsModal.remove()
   };
 
+  /* Favorite functions */
+  $scope.setFavorite = function(place_id){
+    Favorites.setFavorite(place_id);
+    $scope.currentPlace.favorite = Favorites.isFavorite(place_id);
+  };
+
 
 
 });
 
+app.controller('FavoritesCtrl', function($scope, $state, $timeout, $sce, DB, $ionicLoading, $ionicModal, $ionicPopup, ngFB, $rootScope, Favorites) {
+
+  console.log("oppening favorites");
+
+  //search once
+  gettingPlaces();
+
+  //finds places by Google Radar Search
+  $scope.gPlaces = [];
+
+  function gettingPlaces(){
+    console.log("getting Places");
+
+    $ionicLoading.show({
+      animation: 'fade-in',
+      showBackdrop: true,
+      maxWidth: 200,
+      showDelay: 0,
+      template: '<ion-spinner icon="ripple" class="spinner-calm"></ion-spinner>' +
+      '<br/>Carregando...'
+    });
+    $scope.gPlaces = [];
+
+    getFavoritesAndSearch();
+
+  }
+
+  function getFavoritesAndSearch(){
+    //get favorites places
+    $scope.favoritesPlaceIds = Favorites.getFavoritesArray();
+
+    if($scope.favoritesPlaceIds.length == 0)
+        $ionicLoading.hide();
+
+    for(var i = 0; i < $scope.favoritesPlaceIds.length; i++){
+      // get place details
+      getPlaceDetails(i);
+    }
 
 
-app.service('DB', function ($http, Backand) {
+  }
+
+  function getPlaceDetails(i){
+    var place_id = $scope.favoritesPlaceIds[i];
+    var request = {
+      placeId: place_id
+    };
+
+    var service = new google.maps.places.PlacesService(document.getElementById('favView').appendChild(document.createElement('div')));
+    service.getDetails(request,
+      function callback(place, status) {
+        if (status == google.maps.places.PlacesServiceStatus.OK) {
+          console.log("Google Details:");
+          console.log(place);
+
+
+          $scope.gPlaces[i] = place;
+
+
+          //check if it is favorite
+          $scope.gPlaces[i].favorite = Favorites.isFavorite(place_id);
+          console.log("favorite: " +$scope.gPlaces[i].favorite);
+
+          //set current place main photo
+          if(typeof $scope.gPlaces[i].photos != 'undefined')
+            $scope.gPlaces[i].photo = $sce.trustAsResourceUrl($scope.gPlaces[i].photos[0].getUrl({'maxWidth': 300, 'maxHeight': 300}));
+          else
+            $scope.gPlaces[i].photo = "img/no-photo.jpg";
+
+          //set image of category
+          //TODO add restaurant category
+          if($scope.gPlaces[i].types.includes('night_club') && $scope.gPlaces[i].types.includes('bar'))
+            $scope.gPlaces[i].category = "Bar Balada";
+          else if($scope.gPlaces[i].types.includes('night_club'))
+            $scope.gPlaces[i].category = "Balada";
+          else if($scope.gPlaces[i].types.includes('bar'))
+            $scope.gPlaces[i].category = "Bar";
+
+
+          //calculate distance from my position
+          $timeout(function(){
+            getDistanceFromLatLonInKm($rootScope.myPosition, $scope.gPlaces[i].geometry.location);
+            $scope.$apply();
+          });
+
+
+          DB.getPlaceByPlaceId(place.place_id).then(function(result){
+            var dbPlace = result.data[0];
+            console.log("DB details: ");
+            console.log(dbPlace);
+
+            if(typeof dbPlace == "undefined"){
+              $scope.gPlaces[i].price = "?";
+              $ionicLoading.hide();
+              return;
+            }
+
+            //if place exists in db
+            $scope.gPlaces[i].status = typeof dbPlace.status != "undefined" ? dbPlace.status : 0;
+            $scope.gPlaces[i].lastreport = typeof dbPlace.lastreport != "undefined" ? dbPlace.lastreport : null;
+            $scope.gPlaces[i].facebook_id = dbPlace.facebook_id || null;
+            $scope.gPlaces[i].price = dbPlace.price;
+
+            $ionicLoading.hide();
+
+
+
+            $timeout(function() {
+              $scope.$apply();
+            });
+          });
+
+        }else alert(status);
+      });
+  }
+
+
+
+  function getDistanceFromLatLonInKm(pos1,pos2, geo) {
+    if(geo){
+      var lat1 = pos1.coords.latitude ;
+      var lon1 = pos1.coords.longitude ;
+
+      var lat2 = pos2.coords.latitude;
+      var lon2 = pos2.coords.longitude;
+
+    }else{
+      var lat1 =  pos1.lat();
+      var lon1 =  pos1.lng();
+
+      var lat2 = pos2.lat();
+      var lon2 = pos2.lng();
+
+    }
+
+    var R = 6371; // Radius of the earth in km
+    var dLat = deg2rad(lat2-lat1);  // deg2rad below
+    var dLon = deg2rad(lon2-lon1);
+    var a =
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon/2) * Math.sin(dLon/2)
+      ;
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    var d = R * c; // Distance in km
+    return d;
+
+    function deg2rad(deg) {
+      return deg * (Math.PI/180)
+    }
+  }
+  function getDateInterval(lastreport){
+    if(lastreport == null) return null;
+    var now = new Date();
+    lastreport = lastreport.replace('T', ' ');
+    var dateReport = mysqlTimeStampToDate(lastreport);
+    dateReport.setHours ( dateReport.getHours() - 3 );
+    var diffMs = (now - dateReport); // milliseconds between now & dateReport
+    var diffDays = Math.floor(diffMs / 86400000); // days
+    var diffHrs = Math.round((diffMs % 86400000) / 3600000); // hours
+    var diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000); // minutes
+
+    var diffTotalHrs = Math.floor((diffMs/86400000)*24);
+
+    return diffTotalHrs;
+
+  }
+  function roundN(N,x) {
+    if(x > 0)
+      return Math.ceil(x/N) * N;
+    else if( x < 0)
+      return Math.floor(x/N) * N;
+    else
+      return N;
+  }
+  function getThermometerMark(status, lastreport){
+    if(getDateInterval(lastreport) > 3 ) return 0; //if lastreport was earlier than 3 hrs ago, ignore
+    if(status == 0 || status == null) return 0;
+    if(status < 1.5) return 1;
+    if(status >= 1.5 && status < 2.5) return 2;
+    if(status >= 2.5 && status < 3.5) return 3;
+    if(status >= 3.5 && status < 4.5) return 4;
+    if(status >= 4.5 && status < 5.5) return 5;
+    if(status >= 5.5 && status < 6.5) return 6;
+    if(status >= 6.5 && status < 7.5) return 7;
+    if(status >= 7.5 && status < 8.5) return 8;
+    if(status >= 8.5 && status < 9.5) return 9;
+    if(status >= 9.5) return 10;
+  }
+
+  function mysqlTimeStampToDate(timestamp) {
+    //function parses mysql datetime string and returns javascript Date object
+    //input has to be in this format: 2007-06-05 15:26:02
+    var regex=/^([0-9]{2,4})-([0-1][0-9])-([0-3][0-9]) (?:([0-2][0-9]):([0-5][0-9]):([0-5][0-9]))?$/;
+    var parts=timestamp.replace(regex,"$1 $2 $3 $4 $5 $6").split(' ');
+    return new Date(parts[0],parts[1]-1,parts[2],parts[3],parts[4],parts[5]);
+  }
+
+  $scope.getLastReport = function(lastreport){
+    if(lastreport == null) return 'Sem dados';
+    var now = new Date();
+    lastreport = lastreport.replace('T', ' ');
+    var dateReport = mysqlTimeStampToDate(lastreport);
+    dateReport.setHours ( dateReport.getHours() - 3 );
+    var diffMs = (now - dateReport); // milliseconds between now & dateReport
+    var diffDays = Math.floor(diffMs / 86400000); // days
+    var diffHrs = Math.round((diffMs % 86400000) / 3600000); // hours
+    var diffTotalHrs = Math.floor((diffMs/86400000)*24);
+    var diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000); // minutes
+
+    if(diffTotalHrs >= 1){
+      if(diffTotalHrs > 3) return 'Sem dados recentes';
+      else return roundN(1.0,diffTotalHrs) + 'hrs atrás';
+    }else{
+      return roundN(1.0,diffMins) + 'min atrás';
+    }
+  };
+
+  $scope.refresh = (function(){
+    gettingPlaces() ;
+  });
+
+  $scope.getThermIcon = function(status, lastreport){
+    return 'img/thermometer/' + getThermometerMark(status, lastreport) + '.png';
+  };
+
+  $scope.goToPlace = function(place_id){
+    $state.go('app.place', { placeId: place_id} );
+  };
+
+});
+
+
+app.service('oldDB', function ($http, Backand) {
   var service = this,
     baseUrl = '/1/objects/',
     objectPlaces = 'places/',
@@ -2263,7 +2672,7 @@ app.service('DB', function ($http, Backand) {
       }
     });
   };
-  
+
   //get facebook long lived token
   service.getFacebookLongLivedToken = function(short_lived_token){
   	var response = $http ({
@@ -2275,18 +2684,148 @@ app.service('DB', function ($http, Backand) {
   		params: {
     		parameters: {
       			short_lived_token: short_lived_token
-    		}	
+    		}
   		}
 	});
-	
+
 	return response;
-	
+
   };
 
 
 
 
 });
+
+app.service('DB', function($http){
+
+    var service = this,
+        queryUrl = "http://tafervendo.integrastudio.com.br/tafervendo/api/";
+
+    function escapeString(title) {
+        title = title.replace(/'/g, "");
+        title = escape(title);
+        return title
+    }
+    service.savePlaceIfNotExists= function(place){
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "insertPlace",
+            params: {
+              'place_id': place.place_id,
+              'address': escapeString(place.address),
+              'name': escapeString(place.name),
+              'type': place.type,
+              'lat': place.lat,
+              'long': place.long
+            }
+        });
+    };
+
+    service.getPlaceByPlaceId = function (place_id){
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "place",
+            params: {
+              place_id: place_id
+            }
+        });
+    };
+
+    service.updatePlace = function(place_id, place){
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "updatePlace",
+            params: {
+              description: place.description,
+              price: place.price,
+              facebook: place.facebook,
+              facebook_id: place.facebook_id,
+              place_id: place_id,
+              website: place.website
+            }
+        });
+    };
+
+    service.updateStatus = function(place_id, status, lastreport){
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "updateStatus",
+            params: {
+              place_id: place_id,
+              status: status,
+              lastreport: lastreport
+            }
+        });
+    };
+
+
+    service.saveReport = function (object) {
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "insertReport",
+            params: object
+        });
+    };
+
+    service.getReportsFromPlaceId = function (place_id) {
+        return $http ({
+            method: 'GET',
+            url: queryUrl + "reports",
+            params: {
+              place_id: place_id
+            }
+        });
+    };
+
+
+    //get facebook long lived token
+    service.getFacebookLongLivedToken = function(short_lived_token) {
+        var response = $http ({
+            method: 'GET',
+            url: "http://tafervendo.integrastudio.com.br/tafervendo/getFacebookToken.php",
+            params: {
+              token: short_lived_token
+            }
+        });
+
+        return response;
+    };
+});
+
+app.service('Favorites', function ($rootScope) {
+  var service = this;
+
+  service.getFavoritesArray = function(){
+    return JSON.parse( window.localStorage.getItem('favorites'));
+  };
+
+  service.setFavorite = function (place_id) {
+    var array = service.getFavoritesArray();
+    console.log(array);
+    //if place_id exists, remove, else, add it
+    if(array != null && array.includes(place_id))
+      array.splice(array.indexOf(place_id), 1);
+    else if(array == null)
+      array = [place_id];
+    else
+      array.push(place_id);
+
+    //save to local storage
+    window.localStorage.setItem('favorites', JSON.stringify(array));
+
+  };
+
+  service.isFavorite = function(place_id){
+    var array = service.getFavoritesArray();
+    if(array != null && array.includes(place_id))
+      return true;
+    else
+      return false;
+
+  };
+});
+
 
 app.filter('reverse', function() {
   return function(items) {

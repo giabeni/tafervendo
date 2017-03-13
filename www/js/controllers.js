@@ -1,50 +1,6 @@
 app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $ionicModal, $timeout, ngFB, DB, Favorites, $state) {
 
 
-  /*var testPlace = {};
-  testPlace.place_id = 'TestInsert6';
-  testPlace.description = 'Descr';
-  testPlace.price = '$$';
-  testPlace.facebook = 'facebook';
-  testPlace.facebook_id = "fbid.22";
-  testPlace.website = "site";
-
-  var testReport = {};
-    testReport.status = 5;
-    testReport.place_id = "TestInsert6";
-    $http ({
-        method: 'GET',
-        url: "http://tafervendo.integrastudio.com.br/tafervendo/api/insertReport",
-        params: testReport
-    }).then(function (response) {
-            console.log( " saving report  ");
-            console.log(response);
-
-        $http ({
-            method: 'GET',
-            url: "http://tafervendo.integrastudio.com.br/tafervendo/api/reports",
-            params: testReport
-        }).then(function (response) {
-                console.log( " getting reports  ");
-                console.log(response);
-
-            },function (error){
-                console.log("error newdb:");
-                console.warn(error);
-            }
-        );
-
-        },function (error){
-            console.log("error newdb:");
-            console.warn(error);
-        }
-    );
-
-
-*/
-
-
-
   $rootScope.toggleLeftSideMenu = function() {
     $ionicSideMenuDelegate.toggleLeft();
   };
@@ -123,7 +79,7 @@ app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $
     DB.getFacebookLongLivedToken(shortLivedToken).then(
     	function(response){
     		console.log("long lived token:");
-        	$rootScope.fbAccessToken = getParameterByName('access_token', '?'+response.data);
+        	$rootScope.fbAccessToken = response.data;
     		console.log($rootScope.fbAccessToken);
     		//saves token in device and in session storage
         	window.localStorage.setItem("fbToken", $rootScope.fbAccessToken);
@@ -148,7 +104,7 @@ app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $
 
 	$rootScope.fbAccessToken = null;
 	//if there is a facebook token saved in the device, use it
-	if(localStorage.getItem("fbToken") != null){
+	if(localStorage.getItem("fbToken") !== null && localStorage.getItem("fbToken") !== 'null'){
     	ngFB.updateAccessToken(localStorage.getItem("fbToken"));
 	 	getMyFacebookInfo();
 
@@ -159,7 +115,6 @@ app.controller('AppCtrl', function($scope, $ionicSideMenuDelegate, $rootScope, $
 });
 
 app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout, $sce, DB, $ionicLoading, $ionicModal, $ionicPopup, ngFB, $rootScope, $ionicSlideBoxDelegate, Favorites) {
-
 
   //global variables
   $scope.places = [];
@@ -422,26 +377,48 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   }
 
   function addPlacesOnMap(results, status){
+    $scope.loadingMarkers = true;
     if (status == google.maps.places.PlacesServiceStatus.OK) {
       //clear the places array and update it
-      clearAllMarkers();
+
+      /*clearAllMarkers();
       $scope.places = [];
-      $scope.places = results;
+      $scope.places = results;*/
+
+      $scope.count = 0;
+      $scope.resultsLength = results.length;
 
       for (var i = 0; i < results.length; i++) {
         //for each place found, create marker
         var place = results[i];
-        //get status and add marker
-        getPlaceExtraInfo(place, i);
+
+        /*if place is already on the array, just update the marker if necessary
+          else, set new index and then add marker and get info
+         */
+        if(!$scope.places.includes(place)) {
+            $scope.places.push(place);
+            var newPlaceIndex = $scope.places.indexOf(place);
+            addPlaceMarker(place, newPlaceIndex);
+            getPlaceExtraInfo(place, newPlaceIndex);
+        }else{
+            DB.getPlaceByPlaceId(place.place_id).then(function(result){
+              if(result.data[0].status != $scope.places[index].status ){
+                $scope.places[index].status =  (result.data == 'false' || typeof result.data[0] == 'undefined') ? 0 : result.data[0].status;
+                $scope.places[index].lastreport =  (result.data == 'false' || typeof result.data[0] == 'undefined') ? 0 : result.data[0].lastreport;
+                updateThermometerMarker(index);
+              }
+            });
+
+            $scope.count++;
+        }
         console.log(place);
 
 
         //if user is close to place, suggest colaboration
         if(getDistanceFromLatLonInKm($scope.myPosition, place.geometry.location, false) < 0.05 && !$scope.firstLoad){
-          showNearConfirm(place.name, i);
+          showNearConfirm(place.name, typeof newPlaceIndex == 'undefined' ? i : newPlaceIndex);
         }
 
-        //TODO dont increase id when INSERT IGNORE
         var newPlace = {};
         newPlace.place_id = place.place_id;
         newPlace.address = place.vicinity;
@@ -450,12 +427,15 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
         newPlace.long = place.geometry.location.lng();
         newPlace.type = place.types[0] + " " + place.types[1] + " " + place.types[2];
 
-
+        console.log("saving:" + newPlace.place_id);
         DB.savePlaceIfNotExists(newPlace).then(function(result) {
-          $ionicLoading.hide();
+
+         if(!Array.isArray(result.data) )
+            console.log("saved on id: " + result.data);
+        $ionicLoading.hide();
+        }, function(error){
+          console.warn(error);
         });
-
-
 
       }
     }else alert("Erro ao encontrar locais:"+ status);
@@ -473,14 +453,31 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
     });
   }
 
-  //get places Backand infos and add marker
+    function clearMarker(index){
+        console.log('clearing specific marker');
+        $scope.places[index].marker.setMap(null);
+    }
+
+  //get places DB infos and add marker
   function getPlaceExtraInfo(place, index){
     DB.getPlaceByPlaceId(place.place_id).then(function(result){
-      $scope.places[index].status = typeof result.data[0] == "undefined" ? 0 : result.data[0].status;
-      $scope.places[index].lastreport = typeof result.data[0] == "undefined" ? 0 : result.data[0].lastreport;
-      //TODO add more details
-      addPlaceMarker(place, index);
+        $scope.count++;
+        if($scope.count == $scope.resultsLength)
+            $scope.loadingMarkers = false;
+
+      $scope.places[index].status =  (result.data == 'false' || typeof result.data[0] == 'undefined') ? 0 : result.data[0].status;
+      $scope.places[index].lastreport =  (result.data == 'false' || typeof result.data[0] == 'undefined') ? 0 : result.data[0].lastreport;
+      updateThermometerMarker(index);
+    }, function(error){
+        $scope.count++;
+
+        if($scope.count == $scope.resultsLength)
+            $scope.loadingMarkers = false;
+
+      console.warn("error:" + place.place_id);
+      console.warn(error);
     });
+
   }
 
   function addPlaceMarker(place, index){
@@ -506,6 +503,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
         $timeout(function(){$scope.openPlace(index)}, 300);
         $scope.map.panTo($scope.currentPlace.geometry.location);
 
+
       });
 
 
@@ -523,6 +521,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   }
 
   function getThermometerMark(status, lastreport){
+    if(status == null || lastreport == null) return 0;
     if(getDateInterval(lastreport) > 3 ) return 0; //if lastreport was earlier than 3 hrs ago, ignore
     if(status == 0 || status == null) return 0;
     if(status < 1.5) return 1;
@@ -736,6 +735,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   function saveThermometerReport(){
     $scope.currentReport.place_id = $scope.currentPlace.place_id;
     $scope.currentReport.time = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    $scope.loadingMarkers = true;
     $ionicLoading.show({
       animation: 'fade-in',
       showBackdrop: true,
@@ -786,7 +786,7 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   function getDateInterval(lastreport){
     if(lastreport == null) return null;
     var now = new Date();
-    lastreport = lastreport.replace('T', ' ');
+    //lastreport = lastreport.replace('T', ' ');
     var dateReport = mysqlTimeStampToDate(lastreport);
     dateReport.setHours ( dateReport.getHours() - 3 );
     var diffMs = (now - dateReport); // milliseconds between now & dateReport
@@ -840,17 +840,19 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
 
   function updateStatusMarkers(){
 
-    clearAllMarkers();
+    $scope.loadingMarkers = true;
+
+    //clearAllMarkers();
     $scope.zindex++;
     $scope.places.forEach(function(item, index) {
       getPlaceExtraInfo(item, index);
-      updateThermometerMarker(item);
+      updateThermometerMarker(index);
     });
   }
 
-  function updateThermometerMarker(place) {
-    var status = getThermometerMark(place.status, place.lastreport);
-    place.marker.setIcon("img/thermometer/"+status+".png");
+  function updateThermometerMarker(index) {
+    var status = getThermometerMark($scope.places[index].status, $scope.places[index].lastreport);
+    $scope.places[index].marker.setIcon("img/thermometer/"+status+".png");
   }
 
   function showNearConfirm(name, index) {
@@ -1108,6 +1110,7 @@ app.controller('SuggestionsCtrl', function($scope, $state,  $cordovaGeolocation,
     console.log("statuss search: " + status);
     if (status !== google.maps.places.PlacesServiceStatus.OK) {
       console.error("nearby search:" + status);
+      $ionicLoading.hide();
       return;
     }
 
@@ -1445,6 +1448,7 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
   function populatePlaces(results, status) {
     if (status !== google.maps.places.PlacesServiceStatus.OK) {
       console.error("nearby search:" + status);
+      $ionicLoading.hide();
       return;
     }
 
@@ -1804,6 +1808,9 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
 
   /* initial variables */
 
+  $scope.sliderOptions = {
+      autoHeight: true
+  };
   $scope.currentReport = {};
   $scope.currentReport.status = 4;
   $ionicModal.fromTemplateUrl('templates/thermometer.html', {
@@ -1880,6 +1887,8 @@ app.controller('PlaceCtrl', function($scope, $stateParams ,$cordovaGeolocation, 
           //check if it is favorite
           $scope.currentPlace.favorite = Favorites.isFavorite(place_id);
           console.log("favorite: " + $scope.currentPlace.favorite);
+
+
 
 
           $scope.currentPlace.allPhotos = place.photos;
@@ -2326,6 +2335,9 @@ app.controller('FavoritesCtrl', function($scope, $state, $timeout, $sce, DB, $io
   function getFavoritesAndSearch(){
     //get favorites places
     $scope.favoritesPlaceIds = Favorites.getFavoritesArray();
+
+    if($scope.favoritesPlaceIds.length == 0)
+        $ionicLoading.hide();
 
     for(var i = 0; i < $scope.favoritesPlaceIds.length; i++){
       // get place details

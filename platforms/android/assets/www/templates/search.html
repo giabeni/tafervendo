@@ -1,4 +1,4 @@
-<ion-view view-title="" class="suggestions" hide-back-button="false" hide-nav-bar="true" id="searchView" style="padding-bottom: 50px;">
+<ion-view view-title="" cache-view="true" class="suggestions" hide-back-button="false" hide-nav-bar="true" id="searchView" style="padding-bottom: 50px;">
 
 
   <div class="bar bar-header item-input-inset">
@@ -12,48 +12,93 @@
     <i class="icon ion-search" style="color: #441579;font-size:26px" ng-click="refresh()"></i>
   </div>
 
-  <ion-content scroll="true" style="top:44px; bottom: 55px; position: absolute;">
-    <div class="place-info" ng-repeat="place in gPlaces track by $index" ng-click="goToPlace(place.place_id)" ng-hide="place.hide">
-
-      <div class="row">
-        <div class="col col-10">
-          <img src="{{getThermIcon(place.status, place.lastreport)}}"/>
-        </div>
-        <div class="col">
-          <large>{{place.name}}</large>
-          <small>{{place.formatted_address}}</small>
-          <small>{{place.distanceText}}</small>
-          <small><b>{{getLastReport(place.lastreport)}}</b></small>
-        </div>
-        <div class="col col-20" style="padding: 0;">
-          <img src="{{place.photo}}" class="photo"/>
-        </div>
+  <div class="tabs-striped tabs-top tabs-background-light tabs-color-royal">
+    <div class="tabs">
+      <div class="tab-item active" ng-click="goToTab('places')" ng-class="{'active': tabs.places}">
+        Locais
       </div>
-
-
-      <div class="row tags">
-        <div class="col text-center">
-          <img src="img/{{place.category}}.png"/><br>
-          {{place.category}}
-        </div>
-        <div class="col text-center">
-          <h2>{{currentPlace.rating || "?"}}</h2><br>
-          Estrelas
-        </div>
-        <div class="col text-center">
-          <img src="img/money.png"/><br>
-          {{place.price == null ? '?' : place.price}}
-        </div>
-        <div class="col col-20 text-center" style="background: #441579; color: #fff; font-size: 10px;">
-          <img src="img/plus.png" style="opacity: 1"/>
-          Mais
-        </div>
+      <div class="tab-item" ng-click="goToTab('events')" ng-class="{'active': tabs.events}">
+        Eventos
       </div>
     </div>
+  </div>
 
+  <ion-content scroll="false" style="top:92px; bottom: 55px; position: absolute;">
+
+    <ion-slide-box on-slide-changed="changeTab(index)" show-pager="false" scroll="true" delegate-handle="slider">
+      <ion-slide>
+        <ion-content scroll="true">
+          <div class="place-info"  ng-repeat="place in gPlaces track by $index" ng-click="goToPlace(place.place_id)" ng-hide="place.hide">
+
+          <div class="row">
+            <div class="col col-10">
+              <img src="{{getThermIcon(place.status, place.lastreport)}}"/>
+            </div>
+            <div class="col">
+              <large>{{place.name}}</large>
+              <small>{{place.formatted_address}}</small>
+              <small>{{place.distanceText}}</small>
+              <small><b>{{getLastReport(place.lastreport)}}</b></small>
+            </div>
+            <div class="col col-20" style="padding: 0;">
+              <img src="{{place.photo}}" class="photo"/>
+            </div>
+          </div>
+
+
+          <div class="row tags">
+            <div class="col text-center">
+              <img src="img/{{place.category}}.png"/><br>
+              {{place.category}}
+            </div>
+            <div class="col text-center">
+              <h2>{{place.rating || "?"}}</h2><br>
+              Estrelas
+            </div>
+            <div class="col text-center">
+              <img src="img/money.png"/><br>
+              {{place.price == null ? '?' : place.price}}
+            </div>
+            <div class="col col-20 text-center" style="background: #441579; color: #fff; font-size: 10px;">
+              <img src="img/plus.png" style="opacity: 1"/>
+              Mais
+            </div>
+          </div>
+        </div>
+        </ion-content>
+      </ion-slide>
+      <ion-slide>
+        <ion-content scroll="true">
+          <div class="list events" style="background: #e4e5e7;">
+            <div class="list card" ng-repeat="event in events track by $index " ng-click="event.descrOpen = !event.descrOpen" ng-hide="event.hide">
+            <div class="item item-divider event-title">
+              <h2>{{event.name}}</h2>
+              <p>{{event.formatDate}}</p>
+            </div>
+
+            <div class="item item-image event-image">
+              <img ng-src="{{event.cover.source}}">
+            </div>
+
+            <div class="item item-body event-descr" ng-class="{'open': event.descrOpen}" ng-bind-html="event.description">
+            </div>
+
+            <div class="item item-image event-numbers">
+              <span class="subdued">{{event.attending_count}} confirmados - </span>
+              <span class="subdued">{{event.interested_count}} interessados</span>
+            </div>
+
+            <a class="ion-ios-cart button button-block button-royal fixed-bottom icon-left no-float"
+               href="{{event.ticket_uri}}" style="margin:0; background: #fff; color:#441579;" ng-show="event.ticket_uri != null">Comprar Ingressos</a>
+
+          </div>        </div>
+        </ion-content>
+      </ion-slide>
+    </ion-slide-box>
   </ion-content>
 
-  <div class="row options">
+
+  <div class="row options" ng-show="tabs.places">
     <div class="col text-center" ng-click="toggle('distance')">
       até <br>
       {{options.radius}}km

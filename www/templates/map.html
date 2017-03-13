@@ -1,4 +1,4 @@
-<ion-view hide-nav-bar="true" cache-view="false">
+<ion-view hide-nav-bar="true" cache-view="true">
   <div class="bar bar-header item-input-inset">
     <button class="button button-icon ion-navicon" ng-click="toggleLeftSideMenu()" style="color: #441579;">
     </button>
@@ -12,6 +12,10 @@
 
   <ion-content>
     <div id="map" data-tap-disabled="true"></div>
+    <div class="loading-markers" ng-class="{'show' : loadingMarkers}">
+      <ion-spinner icon="lines" class="spinner-light"></ion-spinner>
+      <span style="position: relative;top: -7px;">Atualizando mapa...</span>
+    </div>
 
     <button class="button button-full button-royal fixed-bottom icon-left ion-fireball no-float" ng-click="goToSuggestions()">
       Onde tá fervendo?

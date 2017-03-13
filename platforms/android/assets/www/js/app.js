@@ -48,6 +48,8 @@ app.config(function($stateProvider, $urlRouterProvider, BackandProvider,$httpPro
   BackandProvider.setAppName('tafervendo');
   BackandProvider.setAnonymousToken('3560099e-ff06-497d-82bd-d98405dbb040');
   $httpProvider.interceptors.push(httpInterceptor);
+  $httpProvider.defaults.useXDomain = true;
+
   function httpInterceptor($q, $log, $cookieStore) {
     return {
       request: function(config) {
@@ -103,6 +105,16 @@ app.config(function($stateProvider, $urlRouterProvider, BackandProvider,$httpPro
         'menuContent': {
           templateUrl: 'templates/search.html',
           controller: 'SearchCtrl'
+        }
+      }
+    })
+
+    .state('app.favorites', {
+      url: '/favorites',
+      views: {
+        'menuContent': {
+          templateUrl: 'templates/favorites.html',
+          controller: 'FavoritesCtrl'
         }
       }
     });

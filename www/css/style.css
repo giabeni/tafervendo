@@ -39,6 +39,28 @@ label.item-input-wrapper {
   border-bottom: 1px solid #ddd;
 }
 
+.loading-markers {
+  width: 100%;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  height: 31px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  text-align: center;
+  display: inline;
+
+  -webkit-transition: all 200ms ease;
+  -moz-transition: all 200ms ease;
+  -ms-transition: all 200ms ease;
+  -o-transition: all 200ms ease;
+  transition: all 200ms ease;
+}
+
+.loading-markers.show {
+  top: 44px;
+}
+
 .place-info{
   position: absolute;
   bottom:0;
@@ -360,9 +382,22 @@ input[type="range"]::-webkit-slider-thumb {
   top: 0;
 }
 
-.slider {
+.slider.image-slider {
   width: 100%;
   height: 100%;
+}
+
+.slider-wrapper{
+  position: relative;
+}
+
+.reviews-slider{
+  width: 100% !important;
+  padding: 20px;
+}
+
+.reviews-slider .slider-slides{
+  width: 100% !important;
 }
 
 
