@@ -13,27 +13,27 @@ app.run(function($ionicPlatform, ngFB) {
       // org.apache.cordova.statusbar required
       StatusBar.styleDefault();
     }
-    
+
     //admob
     if(window.plugins && window.plugins.AdMob) {
-            var admob_key = device.platform == "Android" ? "ca-app-pub-1021577741280918/2807175181" : "ca-app-pub-1021577741280918/2807175181";
+            var admob_key = device.platform == "Android" ? "ca-app-pub-1021577741280918/8714107987" : "ca-app-pub-1021577741280918/2807175181";
             var admob = window.plugins.AdMob;
-            admob.createBannerView( 
+            admob.createBannerView(
                 {
                     'publisherId': admob_key,
                     'adSize': admob.AD_SIZE.BANNER,
                     'bannerAtTop': false
-                }, 
+                },
                 function() {
                 //TODO change test to false
                     admob.requestAd(
-                        { 'isTesting': false }, 
+                        { 'isTesting': false },
                         function() {
                             admob.showAd(true);
-                        }, 
+                        },
                         function() { console.log('failed to request ad'); }
                     );
-                }, 
+                },
                 function() { console.log('failed to create banner view'); }
             );
         }
@@ -48,6 +48,8 @@ app.config(function($stateProvider, $urlRouterProvider, BackandProvider,$httpPro
   BackandProvider.setAppName('tafervendo');
   BackandProvider.setAnonymousToken('3560099e-ff06-497d-82bd-d98405dbb040');
   $httpProvider.interceptors.push(httpInterceptor);
+  $httpProvider.defaults.useXDomain = true;
+
   function httpInterceptor($q, $log, $cookieStore) {
     return {
       request: function(config) {
@@ -103,6 +105,16 @@ app.config(function($stateProvider, $urlRouterProvider, BackandProvider,$httpPro
         'menuContent': {
           templateUrl: 'templates/search.html',
           controller: 'SearchCtrl'
+        }
+      }
+    })
+
+    .state('app.favorites', {
+      url: '/favorites',
+      views: {
+        'menuContent': {
+          templateUrl: 'templates/favorites.html',
+          controller: 'FavoritesCtrl'
         }
       }
     });

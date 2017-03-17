@@ -25,7 +25,7 @@
 
   <ion-content scroll="false" style="top:92px; bottom: 55px; position: absolute;">
 
-    <ion-slide-box on-slide-changed="changeTab(index)" show-pager="false" scroll="true" delegate-handle="slider">
+    <ion-slide-box class='search-slider' on-slide-changed="changeTab(index)" show-pager="false" scroll="true" delegate-handle="slider">
       <ion-slide>
         <ion-content scroll="true">
           <div class="place-info"  ng-repeat="place in gPlaces track by $index" ng-click="goToPlace(place.place_id)" ng-hide="place.hide">

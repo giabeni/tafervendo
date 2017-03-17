@@ -42,7 +42,7 @@ label.item-input-wrapper {
 .loading-markers {
   width: 100%;
   position: absolute;
-  top: 0px;
+  top: -31px;
   left: 0px;
   height: 31px;
   background: rgba(0,0,0,0.5);
@@ -58,7 +58,7 @@ label.item-input-wrapper {
 }
 
 .loading-markers.show {
-  top: 44px;
+  top: 64px;
 }
 
 .place-info{
@@ -187,7 +187,7 @@ label.item-input-wrapper {
 }
 
 .suggestions{
-  background: #ecdfff;
+  background: #f0eaf9;
 }
 .suggestions .place-info{
   position: static;
@@ -461,4 +461,11 @@ input[type="range"]::-webkit-slider-thumb {
 .tabs-striped.tabs-color-royal .tab-item.tab-item-active, .tabs-striped.tabs-color-royal .tab-item.active, .tabs-striped.tabs-color-royal .tab-item.activated {
   color: #441579;
   border: 0 solid #441579;
+}
+
+.search-slider.slider {
+    position: relative;
+    visibility: hidden;
+    overflow: hidden;
+    height: 100%;
 }

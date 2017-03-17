@@ -1,6 +1,6 @@
 
 <div class="modal image-modal transparent" ng-click="closeImagesModal()">
-  <ion-slide-box on-slide-changed="slideChanged(index)" show-pager="true" active-slide="activeSlide" delegate-handle="images-slider">
+  <ion-slide-box on-slide-changed="slideChanged(index)" show-pager="true" class="image-slider" active-slide="activeSlide" delegate-handle="images-slider">
     <ion-slide ng-repeat="image in currentPlace.allPhotos">
       <img ng-src="{{image.getUrl({'maxWidth': 2000, 'maxHeight': 2000})}}" class="fullscreen-image"/>
     </ion-slide>

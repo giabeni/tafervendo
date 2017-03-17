@@ -773,7 +773,8 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
         //update average and lastreport on places
         DB.updateStatus($scope.currentReport.place_id, avg, lastreport).then(function(result){
           $ionicLoading.hide();
-          updateStatusMarkers();
+          var index = $scope.places.indexOf($scope.currentPlace);          
+      	  updateThermometerMarker(index);
         });
       });
     });
@@ -804,7 +805,6 @@ app.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $timeout
   $scope.getLastReport = function(lastreport){
     if(lastreport == null) return 'Sem dados';
     var now = new Date();
-    lastreport = lastreport.replace('T', ' ');
     var dateReport = mysqlTimeStampToDate(lastreport);
     dateReport.setHours ( dateReport.getHours() - 3 );
     var diffMs = (now - dateReport); // milliseconds between now & dateReport
@@ -1467,8 +1467,11 @@ app.controller('SearchCtrl', function($scope, $state,  $cordovaGeolocation, $tim
         place.category = "Balada";
       else if(place.types.includes('bar'))
         place.category = "Bar";
+      else if(place.types.includes('restaurant'))
+        place.category = "Bar";
       else{
         place.hide = true;
+        console.log("Hiding: "+ place.name);
       }
 
       //getting distance
@@ -2800,7 +2803,10 @@ app.service('Favorites', function ($rootScope) {
   var service = this;
 
   service.getFavoritesArray = function(){
+  if(typeof window.localStorage.getItem('favorites') != "undefined")
     return JSON.parse( window.localStorage.getItem('favorites'));
+
+	return [];
   };
 
   service.setFavorite = function (place_id) {
