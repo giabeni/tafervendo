@@ -83,10 +83,36 @@
 
 
     </div>
+
+    <h2 style="color:#441579; font-size:20px; text-align: center; border-bottom: 1px solid #441579; ">Avaliações: </h2>
+    <div class="list" style="padding: 5px;  ">
+      <div class="list card" ng-repeat="review in currentPlace.reviews" style="margin: 5px;">
+
+        <div class="item item-avatar" style="background: #441579; color: #fff;">
+          <img src="{{review.profile_photo_url}}">
+          <h2 style="font-size:22px; color: #fff;">Nota: {{review.rating}}</h2>
+          <p style="font-size:12px;color: #fff;">{{review.author_name}}</p>
+        </div>
+
+        <div class="item item-body">
+          <p style="margin-top: 0;">
+            "{{review.text}}"
+          </p>
+        </div>
+
+        <a class="item " href="#">
+          <h3>{{review.relative_time_description}}</h3>
+        </a>
+
+      </div>
+    </div>
+    <!--
     <ion-slides show-pager="true" class="reviews-slider" options="sliderOptions">
       <ion-slide-page ng-repeat="review in currentPlace.reviews" style="text-align: center; font-size: 12px; font-style: italic; height: auto">
         "{{review.text}}"
       </ion-slide-page>
     </ion-slides>
+
+    -->
   </ion-content>
 </ion-view>
